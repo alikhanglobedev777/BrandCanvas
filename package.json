@@ -1,0 +1,40 @@
+{
+  "name": "brandcanvas",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=22.12.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,mjs,json,md,yml,yaml,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,json,md,yml,yaml,css}\"",
+    "db:generate": "pnpm --filter @brandcanvas/database db:generate",
+    "db:migrate": "pnpm --filter @brandcanvas/database db:migrate",
+    "db:studio": "pnpm --filter @brandcanvas/database db:studio",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "api:openapi": "pnpm --filter @brandcanvas/database build && pnpm --filter @brandcanvas/api openapi:generate",
+    "contracts:generate": "pnpm --filter @brandcanvas/contracts generate",
+    "contracts:sync": "pnpm api:openapi && pnpm contracts:generate",
+    "contracts:check": "pnpm contracts:sync && git diff --exit-code -- packages/contracts/openapi packages/contracts/src/generated",
+    "seed:super-admin": "pnpm --filter @brandcanvas/api seed:super-admin"
+  },
+  "devDependencies": {
+    "prettier": "3.9.5",
+    "turbo": "2.10.4",
+    "typescript": "5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "msgpackr-extract",
+      "sharp"
+    ]
+  }
+}

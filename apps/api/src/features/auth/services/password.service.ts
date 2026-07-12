@@ -1,0 +1,19 @@
+import { Injectable } from "@nestjs/common";
+import { Algorithm, hash, verify } from "@node-rs/argon2";
+
+@Injectable()
+export class PasswordService {
+  hash(password: string): Promise<string> {
+    return hash(password, {
+      algorithm: Algorithm.Argon2id,
+      memoryCost: 19_456,
+      timeCost: 2,
+      parallelism: 1,
+      outputLen: 32,
+    });
+  }
+
+  verify(passwordHash: string, password: string): Promise<boolean> {
+    return verify(passwordHash, password);
+  }
+}

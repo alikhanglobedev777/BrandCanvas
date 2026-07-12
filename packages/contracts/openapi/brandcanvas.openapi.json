@@ -1,0 +1,1124 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "operationId": "App_getHealth",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Check API health",
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "Auth_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Sign in a super admin or seller",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "operationId": "Auth_refresh",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Rotate the refresh token and issue a new access token",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "operationId": "Auth_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthUserDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "summary": "Get the authenticated account",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/change-password": {
+      "post": {
+        "operationId": "Auth_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "summary": "Change the authenticated account password",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "Auth_logout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "summary": "Revoke the current session",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/admin/stores/summary": {
+      "get": {
+        "operationId": "Store_getSummary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreStatusCountDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "summary": "Get store counts for the super-admin dashboard",
+        "tags": [
+          "Stores"
+        ]
+      }
+    },
+    "/api/v1/admin/stores": {
+      "get": {
+        "operationId": "Store_findMany",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "active",
+                "inactive",
+                "suspended",
+                "archived"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "summary": "List stores",
+        "tags": [
+          "Stores"
+        ]
+      },
+      "post": {
+        "operationId": "Store_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStoreDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateStoreResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "summary": "Create a seller account and provision its store",
+        "tags": [
+          "Stores"
+        ]
+      }
+    },
+    "/api/v1/admin/stores/{storeId}": {
+      "get": {
+        "operationId": "Store_findOne",
+        "parameters": [
+          {
+            "name": "storeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "summary": "Get one store",
+        "tags": [
+          "Stores"
+        ]
+      }
+    },
+    "/api/v1/admin/stores/{storeId}/status": {
+      "patch": {
+        "operationId": "Store_updateStatus",
+        "parameters": [
+          {
+            "name": "storeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStoreStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "summary": "Activate, deactivate, suspend, or archive a store",
+        "tags": [
+          "Stores"
+        ]
+      }
+    },
+    "/api/v1/seller/products": {
+      "get": {
+        "operationId": "Catalog_findMany",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "active",
+                "inactive",
+                "archived"
+              ]
+            }
+          },
+          {
+            "name": "stockStatus",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "in_stock",
+                "low_stock",
+                "out_of_stock"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "summary": "List products and current inventory for the authenticated seller store",
+        "tags": [
+          "Seller Catalog"
+        ]
+      },
+      "post": {
+        "operationId": "Catalog_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "summary": "Create a product, default variant, and inventory item",
+        "tags": [
+          "Seller Catalog"
+        ]
+      }
+    },
+    "/api/v1/seller/inventory/{inventoryItemId}/adjustment": {
+      "patch": {
+        "operationId": "Catalog_adjustInventory",
+        "parameters": [
+          {
+            "name": "inventoryItemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryAdjustmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "summary": "Increase or decrease seller inventory and record an audit movement",
+        "tags": [
+          "Seller Catalog"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "BrandCanvas API",
+    "description": "Central API contract for the BrandCanvas multi-tenant commerce platform.",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "cookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "brandcanvas_access"
+      }
+    },
+    "schemas": {
+      "HealthResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok"
+          },
+          "service": {
+            "type": "string",
+            "example": "brandcanvas-api"
+          },
+          "timestamp": {
+            "type": "string",
+            "example": "2026-07-11T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "status",
+          "service",
+          "timestamp"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@brandcanvas.local"
+          },
+          "password": {
+            "type": "string",
+            "example": "ChangeMe123!",
+            "minLength": 8
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "AuthUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Muhammad Ali"
+          },
+          "email": {
+            "type": "string",
+            "example": "admin@brandcanvas.local"
+          },
+          "platformRole": {
+            "type": "string",
+            "enum": [
+              "super_admin",
+              "user"
+            ]
+          },
+          "storeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "storeStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "active",
+              "inactive",
+              "suspended",
+              "archived"
+            ]
+          },
+          "mustChangePassword": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "platformRole",
+          "mustChangePassword"
+        ]
+      },
+      "AuthResponseDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/AuthUserDto"
+          }
+        },
+        "required": [
+          "user"
+        ]
+      },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "minLength": 8
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 12
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
+      },
+      "MessageResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Signed out successfully."
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "StoreStatusCountDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number"
+          },
+          "active": {
+            "type": "number"
+          },
+          "pending": {
+            "type": "number"
+          },
+          "inactive": {
+            "type": "number"
+          },
+          "suspended": {
+            "type": "number"
+          },
+          "archived": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "total",
+          "active",
+          "pending",
+          "inactive",
+          "suspended",
+          "archived"
+        ]
+      },
+      "StoreOwnerDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email"
+        ]
+      },
+      "StoreResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "subdomain": {
+            "type": "string"
+          },
+          "customDomain": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "active",
+              "inactive",
+              "suspended",
+              "archived"
+            ]
+          },
+          "deactivationReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "owner": {
+            "$ref": "#/components/schemas/StoreOwnerDto"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "subdomain",
+          "status",
+          "owner",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "StoreListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoreResponseDto"
+            }
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "totalPages"
+        ]
+      },
+      "CreateStoreDto": {
+        "type": "object",
+        "properties": {
+          "sellerName": {
+            "type": "string",
+            "example": "Sara Khan"
+          },
+          "sellerEmail": {
+            "type": "string",
+            "example": "sara@example.com"
+          },
+          "storeName": {
+            "type": "string",
+            "example": "Glow Beauty"
+          },
+          "subdomain": {
+            "type": "string",
+            "example": "glow-beauty"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "active",
+              "inactive",
+              "suspended",
+              "archived"
+            ],
+            "default": "active"
+          }
+        },
+        "required": [
+          "sellerName",
+          "sellerEmail",
+          "storeName",
+          "subdomain",
+          "status"
+        ]
+      },
+      "CreateStoreResponseDto": {
+        "type": "object",
+        "properties": {
+          "store": {
+            "$ref": "#/components/schemas/StoreResponseDto"
+          },
+          "temporaryPassword": {
+            "type": "string",
+            "description": "Shown once so the super admin can hand it to the seller."
+          }
+        },
+        "required": [
+          "store",
+          "temporaryPassword"
+        ]
+      },
+      "UpdateStoreStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "active",
+              "inactive",
+              "suspended",
+              "archived"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "ProductResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "variantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "inventoryItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "active",
+              "inactive",
+              "archived"
+            ]
+          },
+          "sku": {
+            "type": "string"
+          },
+          "price": {
+            "type": "string",
+            "example": "2500.00"
+          },
+          "compareAtPrice": {
+            "type": "string",
+            "nullable": true,
+            "example": "3000.00"
+          },
+          "stockQuantity": {
+            "type": "number"
+          },
+          "reservedQuantity": {
+            "type": "number"
+          },
+          "availableQuantity": {
+            "type": "number"
+          },
+          "lowStockThreshold": {
+            "type": "number"
+          },
+          "stockStatus": {
+            "type": "string",
+            "enum": [
+              "in_stock",
+              "low_stock",
+              "out_of_stock"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "variantId",
+          "inventoryItemId",
+          "name",
+          "slug",
+          "status",
+          "sku",
+          "price",
+          "stockQuantity",
+          "reservedQuantity",
+          "availableQuantity",
+          "lowStockThreshold",
+          "stockStatus",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ProductListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductResponseDto"
+            }
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "totalPages"
+        ]
+      },
+      "CreateProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Classic T-Shirt"
+          },
+          "description": {
+            "type": "string",
+            "example": "Premium cotton t-shirt."
+          },
+          "sku": {
+            "type": "string",
+            "example": "TSHIRT-BLK-M"
+          },
+          "price": {
+            "type": "string",
+            "example": "2500.00",
+            "pattern": "^\\d+(?:\\.\\d{1,2})?$"
+          },
+          "compareAtPrice": {
+            "type": "string",
+            "example": "3000.00",
+            "pattern": "^\\d+(?:\\.\\d{1,2})?$"
+          },
+          "initialStock": {
+            "type": "number",
+            "default": 0,
+            "minimum": 0
+          },
+          "lowStockThreshold": {
+            "type": "number",
+            "default": 5,
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "active",
+              "inactive",
+              "archived"
+            ],
+            "default": "draft"
+          }
+        },
+        "required": [
+          "name",
+          "sku",
+          "price",
+          "initialStock",
+          "lowStockThreshold",
+          "status"
+        ]
+      },
+      "InventoryAdjustmentDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "manual_increase",
+              "manual_decrease"
+            ]
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 1000000
+          },
+          "reason": {
+            "type": "string",
+            "example": "New supplier stock received."
+          }
+        },
+        "required": [
+          "type",
+          "quantity",
+          "reason"
+        ]
+      }
+    }
+  }
+}

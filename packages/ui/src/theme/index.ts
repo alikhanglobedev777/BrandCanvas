@@ -1,0 +1,1 @@
+export { brandCanvasTheme } from "./theme";
