@@ -15,10 +15,12 @@ import type {
 } from "../entities";
 import {
   StoreCustomizationRepository,
-  type RemoveAssetResult,
+  type SaveThemeDraftPersistenceInput,
   type ThemePersistenceInput,
+  type ThemeWriteResult,
   type UpdateSettingsPersistenceInput,
-  type UpsertAssetPersistenceInput,
+  type CreateCurrentAssetPersistenceInput,
+  type ReplaceCurrentAssetResult,
 } from "./store-customization.repository";
 
 @Injectable()
@@ -90,12 +92,13 @@ export class DrizzleStoreCustomizationRepository implements StoreCustomizationRe
 
   async saveDraft(
     storeId: string,
-    input: ThemePersistenceInput,
-  ): Promise<StoreThemeEntity | null> {
+    input: SaveThemeDraftPersistenceInput,
+  ): Promise<ThemeWriteResult> {
+    const { expectedRevision, ...themeValues } = input;
     const [row] = await this.database.db
       .update(storeThemeConfigurations)
       .set({
-        ...input,
+        ...themeValues,
         revision: sql`${storeThemeConfigurations.revision} + 1`,
         updatedAt: new Date(),
       })
@@ -103,13 +106,19 @@ export class DrizzleStoreCustomizationRepository implements StoreCustomizationRe
         and(
           eq(storeThemeConfigurations.storeId, storeId),
           eq(storeThemeConfigurations.lifecycle, "draft"),
+          eq(storeThemeConfigurations.revision, expectedRevision),
         ),
       )
       .returning();
-    return row ?? null;
+
+    if (row) return row;
+    return (await this.findDraft(storeId)) ? "revision_conflict" : null;
   }
 
-  async publishDraft(storeId: string): Promise<StoreThemeEntity | null> {
+  async publishDraft(
+    storeId: string,
+    expectedRevision: number,
+  ): Promise<ThemeWriteResult> {
     return this.database.db.transaction(async (tx) => {
       const [draft] = await tx
         .select()
@@ -123,6 +132,7 @@ export class DrizzleStoreCustomizationRepository implements StoreCustomizationRe
         .limit(1)
         .for("update");
       if (!draft) return null;
+      if (draft.revision !== expectedRevision) return "revision_conflict";
 
       const [current] = await tx
         .select()
@@ -239,98 +249,98 @@ export class DrizzleStoreCustomizationRepository implements StoreCustomizationRe
     });
   }
 
-  async upsertAsset(
-    input: UpsertAssetPersistenceInput,
-  ): Promise<StoreAssetEntity | null> {
+  async listCurrentAssets(storeId: string): Promise<StoreAssetEntity[]> {
+    return this.database.db
+      .select()
+      .from(storeAssets)
+      .where(
+        and(
+          eq(storeAssets.storeId, storeId),
+          eq(storeAssets.isCurrent, true),
+          inArray(storeAssets.category, ["logo", "favicon"]),
+        ),
+      )
+      .orderBy(storeAssets.category);
+  }
+
+  async replaceCurrentAsset(
+    input: CreateCurrentAssetPersistenceInput,
+  ): Promise<ReplaceCurrentAssetResult> {
     return this.database.db.transaction(async (tx) => {
-      if (input.id) {
-        const [existing] = await tx
-          .select({ id: storeAssets.id })
-          .from(storeAssets)
-          .where(
-            and(
-              eq(storeAssets.id, input.id),
-              eq(storeAssets.storeId, input.storeId),
-            ),
-          )
-          .limit(1)
-          .for("update");
-        if (!existing) return null;
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtext(${`${input.storeId}:${input.category}`}))`,
+      );
+
+      const [replaced] = await tx
+        .select()
+        .from(storeAssets)
+        .where(
+          and(
+            eq(storeAssets.storeId, input.storeId),
+            eq(storeAssets.category, input.category),
+            eq(storeAssets.isCurrent, true),
+          ),
+        )
+        .limit(1)
+        .for("update");
+
+      if (replaced) {
+        await tx.delete(storeAssets).where(eq(storeAssets.id, replaced.id));
       }
 
-      if (input.isCurrent) {
-        const condition = input.id
-          ? and(
-              eq(storeAssets.storeId, input.storeId),
-              eq(storeAssets.category, input.category),
-              ne(storeAssets.id, input.id),
-            )
-          : and(
-              eq(storeAssets.storeId, input.storeId),
-              eq(storeAssets.category, input.category),
-            );
-        await tx
-          .update(storeAssets)
-          .set({ isCurrent: false, updatedAt: new Date() })
-          .where(condition);
-      }
-
-      const values = {
-        category: input.category,
-        storageProvider: input.storageProvider,
-        storageKey: input.storageKey,
-        publicUrl: input.publicUrl,
-        originalFilename: input.originalFilename,
-        mimeType: input.mimeType,
-        sizeBytes: input.sizeBytes,
-        width: input.width ?? null,
-        height: input.height ?? null,
-        isCurrent: input.isCurrent,
-      };
-
-      if (input.id) {
-        const [updated] = await tx
-          .update(storeAssets)
-          .set({ ...values, updatedAt: new Date() })
-          .where(
-            and(
-              eq(storeAssets.id, input.id),
-              eq(storeAssets.storeId, input.storeId),
-            ),
-          )
-          .returning();
-        return updated ?? null;
-      }
-
-      const [created] = await tx
+      const [asset] = await tx
         .insert(storeAssets)
-        .values({ storeId: input.storeId, ...values })
+        .values({
+          ...input,
+          isCurrent: true,
+        })
         .returning();
-      return created ?? null;
+
+      if (!asset) {
+        throw new Error("Store asset insert did not return a record.");
+      }
+
+      if (input.category === "logo") {
+        await tx
+          .update(stores)
+          .set({ logoUrl: input.publicUrl, updatedAt: new Date() })
+          .where(eq(stores.id, input.storeId));
+      }
+
+      return { asset, replaced: replaced ?? null };
     });
   }
 
-  async removeUnusedAsset(
+  async deleteAsset(
     storeId: string,
     assetId: string,
-  ): Promise<RemoveAssetResult> {
+  ): Promise<StoreAssetEntity | null> {
     return this.database.db.transaction(async (tx) => {
       const [asset] = await tx
-        .select({ id: storeAssets.id, isCurrent: storeAssets.isCurrent })
+        .select()
         .from(storeAssets)
         .where(
           and(eq(storeAssets.id, assetId), eq(storeAssets.storeId, storeId)),
         )
         .limit(1)
         .for("update");
-      if (!asset) return "not_found";
-      if (asset.isCurrent) return "in_use";
+
+      if (!asset) return null;
+
       await tx
         .delete(storeAssets)
         .where(
           and(eq(storeAssets.id, assetId), eq(storeAssets.storeId, storeId)),
         );
-      return "removed";
+
+      if (asset.category === "logo" && asset.isCurrent) {
+        await tx
+          .update(stores)
+          .set({ logoUrl: null, updatedAt: new Date() })
+          .where(eq(stores.id, storeId));
+      }
+
+      return asset;
     });
   }
 
@@ -360,8 +370,13 @@ export class DrizzleStoreCustomizationRepository implements StoreCustomizationRe
       headingFont: theme.headingFont,
       bodyFont: theme.bodyFont,
       headerLayout: theme.headerLayout,
+      headerStyle: theme.headerStyle,
       headerSticky: theme.headerSticky,
       headerShowLogo: theme.headerShowLogo,
+      buttonRadius: theme.buttonRadius,
+      cardRadius: theme.cardRadius,
+      productCardStyle: theme.productCardStyle,
+      footerStyle: theme.footerStyle,
       footerShowContact: theme.footerShowContact,
       footerText: theme.footerText,
     };

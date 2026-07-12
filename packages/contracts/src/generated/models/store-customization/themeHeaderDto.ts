@@ -3,9 +3,11 @@
  * Do not edit manually.
  */
 import type { ThemeHeaderDtoLayout } from "./themeHeaderDtoLayout";
+import type { ThemeHeaderDtoStyle } from "./themeHeaderDtoStyle";
 
 export interface ThemeHeaderDto {
   layout: ThemeHeaderDtoLayout;
+  style: ThemeHeaderDtoStyle;
   sticky: boolean;
   showLogo: boolean;
 }

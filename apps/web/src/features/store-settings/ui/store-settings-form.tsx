@@ -251,38 +251,68 @@ export function StoreSettingsForm({
 
       <Paper variant="outlined" sx={{ p: 3 }}>
         <Stack spacing={2.5}>
-          <Typography variant="h6">Next settings contract</Typography>
-          <Alert severity="info">
-            Business address, store policies, and default currency are not part
-            of the current generated store-customization contract yet, so they
-            are shown here as disabled placeholders.
-          </Alert>
+          <Typography variant="h6">Business details and policies</Typography>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12 }}>
               <TextField
                 label="Business address"
-                disabled
-                placeholder="Available when the API adds storefront address settings."
+                multiline
+                minRows={3}
+                error={Boolean(errors.businessAddress)}
+                helperText={
+                  errors.businessAddress?.message ??
+                  "Plain-text business or return address shown where your storefront requires it."
+                }
+                {...register("businessAddress", {
+                  maxLength: {
+                    value: 1000,
+                    message: "Use 1000 characters or fewer.",
+                  },
+                })}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
               <TextField
                 label="Store policies"
-                disabled
                 multiline
-                minRows={4}
-                placeholder="Available when the API adds policy fields."
+                minRows={6}
+                error={Boolean(errors.storePolicies)}
+                helperText={
+                  errors.storePolicies?.message ??
+                  "Describe shipping, returns, exchanges, privacy, and customer responsibilities in plain text."
+                }
+                {...register("storePolicies", {
+                  maxLength: {
+                    value: 10_000,
+                    message: "Use 10000 characters or fewer.",
+                  },
+                })}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 select
                 label="Default currency"
-                disabled
-                value=""
-                helperText="Currency configuration is not exposed in the current seller contract."
+                error={Boolean(errors.defaultCurrency)}
+                helperText={
+                  errors.defaultCurrency?.message ??
+                  "Used as the default display currency for this store."
+                }
+                {...register("defaultCurrency", {
+                  required: "Choose a default currency.",
+                  pattern: {
+                    value: /^[A-Z]{3}$/,
+                    message: "Use a three-letter uppercase currency code.",
+                  },
+                })}
               >
-                <MenuItem value="">Not supported yet</MenuItem>
+                {["PKR", "USD", "GBP", "EUR", "AED", "SAR"].map(
+                  (currency) => (
+                    <MenuItem key={currency} value={currency}>
+                      {currency}
+                    </MenuItem>
+                  ),
+                )}
               </TextField>
             </Grid>
           </Grid>

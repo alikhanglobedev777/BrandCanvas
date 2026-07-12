@@ -29,6 +29,9 @@ export interface StoreSettingsEntity {
   description: string | null;
   contactEmail: string | null;
   contactPhone: string | null;
+  businessAddress: string | null;
+  storePolicies: string | null;
+  defaultCurrency: string;
   facebookUrl: string | null;
   instagramUrl: string | null;
   youtubeUrl: string | null;

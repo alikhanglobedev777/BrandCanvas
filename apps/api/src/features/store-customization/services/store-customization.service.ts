@@ -5,10 +5,8 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import {
-  RegisterStoreAssetDto,
+  PublishThemeDto,
   SaveThemeDraftDto,
-  StoreAssetResponseDto,
-  StoreCustomizationMessageDto,
   StoreSettingsResponseDto,
   StoreThemeResponseDto,
   ThemeVersionListResponseDto,
@@ -49,6 +47,12 @@ export class StoreCustomizationService {
         this.nullableText(input.contactEmail)?.toLowerCase() ?? null;
     if (input.contactPhone !== undefined)
       update.contactPhone = this.nullableText(input.contactPhone);
+    if (input.businessAddress !== undefined)
+      update.businessAddress = this.nullableText(input.businessAddress);
+    if (input.storePolicies !== undefined)
+      update.storePolicies = this.nullableText(input.storePolicies);
+    if (input.defaultCurrency !== undefined)
+      update.defaultCurrency = input.defaultCurrency.toUpperCase();
     if (input.socialLinks) {
       const social = input.socialLinks;
       if (social.facebookUrl !== undefined)
@@ -93,17 +97,29 @@ export class StoreCustomizationService {
     storeId: string,
     input: SaveThemeDraftDto,
   ): Promise<StoreThemeResponseDto> {
-    const draft = await this.repository.saveDraft(
-      storeId,
-      this.toThemeInput(input),
-    );
+    const draft = await this.repository.saveDraft(storeId, {
+      ...this.toThemeInput(input),
+      expectedRevision: input.expectedRevision,
+    });
+    if (draft === "revision_conflict") {
+      this.revisionConflict();
+    }
     if (!draft)
       this.notFound("THEME_DRAFT_NOT_FOUND", "The theme draft was not found.");
     return StoreCustomizationMapper.themeToResponse(draft);
   }
 
-  async publish(storeId: string): Promise<StoreThemeResponseDto> {
-    const published = await this.repository.publishDraft(storeId);
+  async publish(
+    storeId: string,
+    input: PublishThemeDto,
+  ): Promise<StoreThemeResponseDto> {
+    const published = await this.repository.publishDraft(
+      storeId,
+      input.expectedRevision,
+    );
+    if (published === "revision_conflict") {
+      this.revisionConflict();
+    }
     if (!published)
       this.notFound("THEME_DRAFT_NOT_FOUND", "The theme draft was not found.");
     return StoreCustomizationMapper.themeToResponse(published);
@@ -138,60 +154,6 @@ export class StoreCustomizationService {
     return StoreCustomizationMapper.themeToResponse(published);
   }
 
-  async upsertAsset(
-    storeId: string,
-    input: RegisterStoreAssetDto,
-  ): Promise<StoreAssetResponseDto> {
-    this.assertAssetMetadata(input);
-    try {
-      const asset = await this.repository.upsertAsset({
-        ...(input.id ? { id: input.id } : {}),
-        storeId,
-        category: input.category,
-        storageProvider: input.storageProvider.trim(),
-        storageKey: input.storageKey.trim(),
-        publicUrl: input.publicUrl,
-        originalFilename: input.originalFilename.trim(),
-        mimeType: input.mimeType.toLowerCase(),
-        sizeBytes: input.sizeBytes,
-        ...(input.width ? { width: input.width } : {}),
-        ...(input.height ? { height: input.height } : {}),
-        isCurrent: input.isCurrent,
-      });
-      if (!asset)
-        this.notFound(
-          "STORE_ASSET_NOT_FOUND",
-          "The store asset was not found.",
-        );
-      return StoreCustomizationMapper.assetToResponse(asset);
-    } catch (error) {
-      if (this.isUniqueViolation(error)) {
-        throw new ConflictException({
-          code: "STORE_ASSET_CONFLICT",
-          message: "This stored asset is already registered.",
-        });
-      }
-      throw error;
-    }
-  }
-
-  async removeAsset(
-    storeId: string,
-    assetId: string,
-  ): Promise<StoreCustomizationMessageDto> {
-    const result = await this.repository.removeUnusedAsset(storeId, assetId);
-    if (result === "not_found")
-      this.notFound("STORE_ASSET_NOT_FOUND", "The store asset was not found.");
-    if (result === "in_use") {
-      throw new ConflictException({
-        code: "STORE_ASSET_IN_USE",
-        message:
-          "The current asset must be replaced or unassigned before it can be removed.",
-      });
-    }
-    return { message: "Store asset metadata removed successfully." };
-  }
-
   private toThemeInput(input: SaveThemeDraftDto): ThemePersistenceInput {
     return {
       primaryColor: input.colors.primary.toUpperCase(),
@@ -201,31 +163,24 @@ export class StoreCustomizationService {
       headingFont: input.typography.headingFont,
       bodyFont: input.typography.bodyFont,
       headerLayout: input.header.layout,
+      headerStyle: input.header.style,
       headerSticky: input.header.sticky,
       headerShowLogo: input.header.showLogo,
+      buttonRadius: input.buttonRadius,
+      cardRadius: input.cardRadius,
+      productCardStyle: input.productCardStyle,
+      footerStyle: input.footer.style,
       footerShowContact: input.footer.showContact,
       footerText: this.nullableText(input.footer.text),
     };
   }
 
-  private assertAssetMetadata(input: RegisterStoreAssetDto): void {
-    if (!input.mimeType.toLowerCase().startsWith("image/")) {
-      throw new BadRequestException({
-        code: "STORE_ASSET_TYPE_UNSUPPORTED",
-        message: "Store assets must be images.",
-      });
-    }
-    const key = input.storageKey.trim();
-    if (
-      !/^[A-Za-z0-9][A-Za-z0-9/_.-]{0,999}$/.test(key) ||
-      key.includes("..") ||
-      key.includes("//")
-    ) {
-      throw new BadRequestException({
-        code: "STORE_ASSET_KEY_INVALID",
-        message: "The storage key is invalid.",
-      });
-    }
+  private revisionConflict(): never {
+    throw new ConflictException({
+      code: "THEME_REVISION_CONFLICT",
+      message:
+        "The theme draft changed after it was loaded. Reload the latest draft before saving or publishing.",
+    });
   }
 
   private nullableText(value: string | null | undefined): string | null {
@@ -238,12 +193,4 @@ export class StoreCustomizationService {
     throw new NotFoundException({ code, message });
   }
 
-  private isUniqueViolation(error: unknown): boolean {
-    return (
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      (error as { code?: unknown }).code === "23505"
-    );
-  }
 }

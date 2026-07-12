@@ -6,6 +6,7 @@ import { validateEnvironment } from "./config/env.schema";
 import { AccessTokenGuard } from "./common/guards/access-token.guard";
 import { RolesGuard } from "./common/guards/roles.guard";
 import { DatabaseModule } from "./infrastructure/database";
+import { StorageModule } from "./infrastructure/storage";
 import { AuthModule } from "./features/auth";
 import { StoresModule } from "./features/stores";
 import { CatalogModule } from "./features/catalog";
@@ -19,6 +20,7 @@ import { StoreCustomizationModule } from "./features/store-customization";
       validate: validateEnvironment,
     }),
     DatabaseModule,
+    StorageModule,
     AuthModule,
     StoresModule,
     CatalogModule,

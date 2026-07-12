@@ -22,5 +22,17 @@ export interface UpdateStoreSettingsDto {
    * @nullable
    */
   contactPhone?: string | null;
+  /**
+   * @maxLength 1000
+   * @nullable
+   */
+  businessAddress?: string | null;
+  /**
+   * @maxLength 10000
+   * @nullable
+   */
+  storePolicies?: string | null;
+  /** @pattern ^[A-Z]{3}$ */
+  defaultCurrency?: string;
   socialLinks?: StoreSocialLinksDto;
 }

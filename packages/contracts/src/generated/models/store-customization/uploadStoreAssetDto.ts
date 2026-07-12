@@ -3,4 +3,6 @@
  * Do not edit manually.
  */
 
-export type RegisterStoreAssetDtoIsCurrent = { [key: string]: unknown };
+export interface UploadStoreAssetDto {
+  file: Blob;
+}

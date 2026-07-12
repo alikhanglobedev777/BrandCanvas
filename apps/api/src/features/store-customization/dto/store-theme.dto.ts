@@ -140,6 +140,13 @@ export class SaveThemeDraftDto extends ThemeShapeDto {
   expectedRevision!: number;
 }
 
+export class PublishThemeDto {
+  @ApiProperty({ minimum: 1, description: "Saved draft revision to publish." })
+  @IsInt()
+  @Min(1)
+  expectedRevision!: number;
+}
+
 export class StoreThemeResponseDto extends ThemeShapeDto {
   @ApiProperty({ format: "uuid" })
   id!: string;

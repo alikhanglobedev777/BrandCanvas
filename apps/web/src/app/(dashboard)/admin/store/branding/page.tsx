@@ -1,5 +1,5 @@
-import { StoreBrandingPage } from "@/features/store-settings";
+import { StoreAssetsPage } from "@/features/store-settings";
 
 export default function Page() {
-  return <StoreBrandingPage />;
+  return <StoreAssetsPage />;
 }

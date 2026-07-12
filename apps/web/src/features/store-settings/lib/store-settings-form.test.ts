@@ -14,6 +14,9 @@ describe("store-settings-form helpers", () => {
         description: null,
         contactEmail: null,
         contactPhone: null,
+        businessAddress: null,
+        storePolicies: null,
+        defaultCurrency: "PKR",
         socialLinks: {},
         createdAt: "2026-07-12T00:00:00.000Z",
         updatedAt: "2026-07-12T00:00:00.000Z",
@@ -23,6 +26,9 @@ describe("store-settings-form helpers", () => {
       description: "",
       contactEmail: "",
       contactPhone: "",
+      businessAddress: "",
+      storePolicies: "",
+      defaultCurrency: "PKR",
       socialLinks: {
         facebookUrl: "",
         instagramUrl: "",
@@ -33,7 +39,7 @@ describe("store-settings-form helpers", () => {
     });
   });
 
-  it("normalizes blank values to null and excludes UI-only fields", () => {
+  it("normalizes blank values and includes the complete generated settings contract", () => {
     expect(
       toStoreSettingsRequest({
         displayName: "  North Studio  ",
@@ -47,15 +53,18 @@ describe("store-settings-form helpers", () => {
           tiktokUrl: "",
           xUrl: "",
         },
-        businessAddress: "ignored",
-        storePolicies: "ignored",
-        defaultCurrency: "ignored",
+        businessAddress: "  Lahore, Pakistan  ",
+        storePolicies: "  Returns within 7 days.  ",
+        defaultCurrency: "PKR",
       }),
     ).toEqual({
       displayName: "North Studio",
       description: null,
       contactEmail: "support@example.com",
       contactPhone: null,
+      businessAddress: "Lahore, Pakistan",
+      storePolicies: "Returns within 7 days.",
+      defaultCurrency: "PKR",
       socialLinks: {
         facebookUrl: null,
         instagramUrl: "https://instagram.com/north",

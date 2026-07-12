@@ -1,6 +1,10 @@
-﻿import "reflect-metadata";
+import "reflect-metadata";
 import fastifyCookie from "@fastify/cookie";
+import fastifyMultipart from "@fastify/multipart";
+import fastifyStatic from "@fastify/static";
 import { BadRequestException, ValidationPipe } from "@nestjs/common";
+import { mkdir } from "node:fs/promises";
+import path from "node:path";
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
 import { FastifyAdapter, type NestFastifyApplication } from "@nestjs/platform-fastify";
@@ -20,8 +24,29 @@ async function bootstrap() {
     secret: config.getOrThrow<string>("COOKIE_SECRET"),
   });
 
+  const assetStorageRoot = path.resolve(
+    process.cwd(),
+    config.get("STORE_ASSET_STORAGE_ROOT", { infer: true }),
+  );
+  await mkdir(assetStorageRoot, { recursive: true });
+
+  await app.register(fastifyMultipart, {
+    limits: {
+      files: 1,
+      fields: 0,
+      parts: 1,
+      fileSize: config.get("STORE_ASSET_MAX_BYTES", { infer: true }),
+    },
+  });
+
+  await app.register(fastifyStatic, {
+    root: assetStorageRoot,
+    prefix: "/uploads/",
+    decorateReply: false,
+  });
+
   app.enableCors({
-    origin: ["http://localhost:3000"],
+    origin: [config.get("WEB_ORIGIN", { infer: true })],
     credentials: true,
   });
 

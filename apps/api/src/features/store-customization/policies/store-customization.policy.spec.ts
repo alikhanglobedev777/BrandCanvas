@@ -16,9 +16,11 @@ class PolicyTestRepository extends StoreCustomizationRepository {
   listPublishedVersions =
     vi.fn<StoreCustomizationRepository["listPublishedVersions"]>();
   rollback = vi.fn<StoreCustomizationRepository["rollback"]>();
-  upsertAsset = vi.fn<StoreCustomizationRepository["upsertAsset"]>();
-  removeUnusedAsset =
-    vi.fn<StoreCustomizationRepository["removeUnusedAsset"]>();
+  listCurrentAssets =
+    vi.fn<StoreCustomizationRepository["listCurrentAssets"]>();
+  replaceCurrentAsset =
+    vi.fn<StoreCustomizationRepository["replaceCurrentAsset"]>();
+  deleteAsset = vi.fn<StoreCustomizationRepository["deleteAsset"]>();
 }
 
 describe("StoreCustomizationPolicy", () => {

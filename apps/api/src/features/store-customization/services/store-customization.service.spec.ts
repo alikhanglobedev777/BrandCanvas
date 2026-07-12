@@ -1,4 +1,4 @@
-import { NotFoundException } from "@nestjs/common";
+import { ConflictException, NotFoundException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { StoreSettingsEntity, StoreThemeEntity } from "../entities";
 import { StoreCustomizationRepository } from "../repositories";
@@ -17,9 +17,11 @@ class ServiceTestRepository extends StoreCustomizationRepository {
   listPublishedVersions =
     vi.fn<StoreCustomizationRepository["listPublishedVersions"]>();
   rollback = vi.fn<StoreCustomizationRepository["rollback"]>();
-  upsertAsset = vi.fn<StoreCustomizationRepository["upsertAsset"]>();
-  removeUnusedAsset =
-    vi.fn<StoreCustomizationRepository["removeUnusedAsset"]>();
+  listCurrentAssets =
+    vi.fn<StoreCustomizationRepository["listCurrentAssets"]>();
+  replaceCurrentAsset =
+    vi.fn<StoreCustomizationRepository["replaceCurrentAsset"]>();
+  deleteAsset = vi.fn<StoreCustomizationRepository["deleteAsset"]>();
 }
 
 const now = new Date("2026-07-12T12:00:00.000Z");
@@ -30,6 +32,9 @@ const settings: StoreSettingsEntity = {
   description: null,
   contactEmail: null,
   contactPhone: null,
+  businessAddress: null,
+  storePolicies: null,
+  defaultCurrency: "PKR",
   facebookUrl: null,
   instagramUrl: null,
   youtubeUrl: null,
@@ -56,8 +61,13 @@ function theme(
     headingFont: "system_sans",
     bodyFont: "arial",
     headerLayout: "logo_left",
+    headerStyle: "solid",
     headerSticky: true,
     headerShowLogo: true,
+    buttonRadius: 8,
+    cardRadius: 12,
+    productCardStyle: "bordered",
+    footerStyle: "simple",
     footerShowContact: true,
     footerText: null,
     publishedAt: version === null ? null : now,
@@ -67,6 +77,7 @@ function theme(
 }
 
 const draftInput = {
+  expectedRevision: 2,
   colors: {
     primary: "#112233",
     secondary: "#445566",
@@ -77,8 +88,16 @@ const draftInput = {
     headingFont: "system_sans" as const,
     bodyFont: "arial" as const,
   },
-  header: { layout: "logo_left" as const, sticky: true, showLogo: true },
-  footer: { showContact: true, text: null },
+  header: {
+    layout: "logo_left" as const,
+    style: "solid" as const,
+    sticky: true,
+    showLogo: true,
+  },
+  footer: { style: "simple" as const, showContact: true, text: null },
+  buttonRadius: 8,
+  cardRadius: 12,
+  productCardStyle: "bordered" as const,
 };
 
 describe("StoreCustomizationService", () => {
@@ -96,35 +115,76 @@ describe("StoreCustomizationService", () => {
       displayName: "Updated",
     });
     await expect(
-      service.updateSettings("store-a", { displayName: " Updated " }),
+      service.updateSettings("store-a", {
+        displayName: " Updated ",
+        businessAddress: " Lahore ",
+        storePolicies: " Returns within 7 days. ",
+        defaultCurrency: "pkr",
+      }),
     ).resolves.toMatchObject({
       storeId: "store-a",
       displayName: "Updated",
     });
     expect(repository.updateSettings).toHaveBeenCalledWith("store-a", {
       displayName: "Updated",
+      businessAddress: "Lahore",
+      storePolicies: "Returns within 7 days.",
+      defaultCurrency: "PKR",
     });
   });
 
-  it("saving a draft does not alter the published theme", async () => {
-    const published = theme("published", 1);
+  it("saving a draft sends the complete structured theme and expected revision", async () => {
     repository.saveDraft.mockResolvedValue(theme("draft", null));
-    repository.findPublished.mockResolvedValue(published);
 
     await service.saveDraft("store-a", draftInput);
-    await expect(
-      service.getPublicPublishedTheme("store-a"),
-    ).rejects.toBeInstanceOf(NotFoundException);
+
+    expect(repository.saveDraft).toHaveBeenCalledWith("store-a", {
+      expectedRevision: 2,
+      primaryColor: "#112233",
+      secondaryColor: "#445566",
+      backgroundColor: "#FFFFFF",
+      textColor: "#111827",
+      headingFont: "system_sans",
+      bodyFont: "arial",
+      headerLayout: "logo_left",
+      headerStyle: "solid",
+      headerSticky: true,
+      headerShowLogo: true,
+      buttonRadius: 8,
+      cardRadius: 12,
+      productCardStyle: "bordered",
+      footerStyle: "simple",
+      footerShowContact: true,
+      footerText: null,
+    });
     expect(repository.publishDraft).not.toHaveBeenCalled();
-    expect(repository.findPublished).not.toHaveBeenCalled();
   });
 
-  it("publishing creates and returns the next immutable version", async () => {
+  it("returns a stable conflict when the draft revision is stale", async () => {
+    repository.saveDraft.mockResolvedValue("revision_conflict");
+
+    await expect(service.saveDraft("store-a", draftInput)).rejects.toMatchObject({
+      response: { code: "THEME_REVISION_CONFLICT" },
+    });
+  });
+
+  it("publishes only the revision the seller reviewed", async () => {
     repository.publishDraft.mockResolvedValue(theme("published", 2));
-    await expect(service.publish("store-a")).resolves.toMatchObject({
+    await expect(
+      service.publish("store-a", { expectedRevision: 2 }),
+    ).resolves.toMatchObject({
       lifecycle: "published",
       publishedVersion: 2,
     });
+    expect(repository.publishDraft).toHaveBeenCalledWith("store-a", 2);
+  });
+
+  it("rejects publishing when the saved draft changed concurrently", async () => {
+    repository.publishDraft.mockResolvedValue("revision_conflict");
+
+    await expect(
+      service.publish("store-a", { expectedRevision: 2 }),
+    ).rejects.toBeInstanceOf(ConflictException);
   });
 
   it("rollback publishes the selected historical configuration as a new version", async () => {
@@ -142,9 +202,7 @@ describe("StoreCustomizationService", () => {
       .mockResolvedValueOnce(theme("published", 2));
     await expect(
       service.getPublicPublishedTheme("inactive-store"),
-    ).rejects.toMatchObject({
-      response: { code: "PUBLISHED_THEME_NOT_FOUND" },
-    });
+    ).rejects.toBeInstanceOf(NotFoundException);
     await expect(
       service.getPublicPublishedTheme("active-store"),
     ).resolves.toMatchObject({ publishedVersion: 2 });

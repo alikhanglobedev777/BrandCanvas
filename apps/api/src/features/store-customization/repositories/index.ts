@@ -1,8 +1,10 @@
 export { DrizzleStoreCustomizationRepository } from "./drizzle-store-customization.repository";
 export {
   StoreCustomizationRepository,
-  type RemoveAssetResult,
+  type SaveThemeDraftPersistenceInput,
   type ThemePersistenceInput,
+  type ThemeWriteResult,
   type UpdateSettingsPersistenceInput,
-  type UpsertAssetPersistenceInput,
+  type CreateCurrentAssetPersistenceInput,
+  type ReplaceCurrentAssetResult,
 } from "./store-customization.repository";

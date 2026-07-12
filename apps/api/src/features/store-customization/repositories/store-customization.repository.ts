@@ -4,7 +4,10 @@ import type {
   StoreSettingsEntity,
   StoreThemeEntity,
   StoreThemeFont,
+  StoreThemeFooterStyle,
   StoreThemeHeaderLayout,
+  StoreThemeHeaderStyle,
+  StoreThemeProductCardStyle,
 } from "../entities";
 
 export interface UpdateSettingsPersistenceInput {
@@ -12,6 +15,9 @@ export interface UpdateSettingsPersistenceInput {
   description?: string | null;
   contactEmail?: string | null;
   contactPhone?: string | null;
+  businessAddress?: string | null;
+  storePolicies?: string | null;
+  defaultCurrency?: string;
   facebookUrl?: string | null;
   instagramUrl?: string | null;
   youtubeUrl?: string | null;
@@ -27,28 +33,40 @@ export interface ThemePersistenceInput {
   headingFont: StoreThemeFont;
   bodyFont: StoreThemeFont;
   headerLayout: StoreThemeHeaderLayout;
+  headerStyle: StoreThemeHeaderStyle;
   headerSticky: boolean;
   headerShowLogo: boolean;
+  buttonRadius: number;
+  cardRadius: number;
+  productCardStyle: StoreThemeProductCardStyle;
+  footerStyle: StoreThemeFooterStyle;
   footerShowContact: boolean;
   footerText: string | null;
 }
 
-export interface UpsertAssetPersistenceInput {
-  id?: string;
+export interface SaveThemeDraftPersistenceInput extends ThemePersistenceInput {
+  expectedRevision: number;
+}
+
+export interface CreateCurrentAssetPersistenceInput {
   storeId: string;
-  category: string;
+  category: "logo" | "favicon";
   storageProvider: string;
   storageKey: string;
   publicUrl: string;
   originalFilename: string;
   mimeType: string;
   sizeBytes: number;
-  width?: number;
-  height?: number;
-  isCurrent: boolean;
+  width: number;
+  height: number;
 }
 
-export type RemoveAssetResult = "removed" | "not_found" | "in_use";
+export interface ReplaceCurrentAssetResult {
+  asset: StoreAssetEntity;
+  replaced: StoreAssetEntity | null;
+}
+
+export type ThemeWriteResult = StoreThemeEntity | "revision_conflict" | null;
 
 export abstract class StoreCustomizationRepository {
   abstract findSellerAccess(
@@ -67,19 +85,23 @@ export abstract class StoreCustomizationRepository {
   ): Promise<StoreThemeEntity | null>;
   abstract saveDraft(
     storeId: string,
-    input: ThemePersistenceInput,
-  ): Promise<StoreThemeEntity | null>;
-  abstract publishDraft(storeId: string): Promise<StoreThemeEntity | null>;
+    input: SaveThemeDraftPersistenceInput,
+  ): Promise<ThemeWriteResult>;
+  abstract publishDraft(
+    storeId: string,
+    expectedRevision: number,
+  ): Promise<ThemeWriteResult>;
   abstract listPublishedVersions(storeId: string): Promise<StoreThemeEntity[]>;
   abstract rollback(
     storeId: string,
     version: number,
   ): Promise<StoreThemeEntity | null>;
-  abstract upsertAsset(
-    input: UpsertAssetPersistenceInput,
-  ): Promise<StoreAssetEntity | null>;
-  abstract removeUnusedAsset(
+  abstract listCurrentAssets(storeId: string): Promise<StoreAssetEntity[]>;
+  abstract replaceCurrentAsset(
+    input: CreateCurrentAssetPersistenceInput,
+  ): Promise<ReplaceCurrentAssetResult>;
+  abstract deleteAsset(
     storeId: string,
     assetId: string,
-  ): Promise<RemoveAssetResult>;
+  ): Promise<StoreAssetEntity | null>;
 }

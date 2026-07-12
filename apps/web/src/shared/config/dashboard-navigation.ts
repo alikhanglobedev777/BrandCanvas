@@ -11,7 +11,8 @@ const sellerNavigation: DashboardNavigationItem[] = [
   { label: "Products", href: "/admin/products" },
   { label: "Inventory", href: "/admin/inventory" },
   { label: "Store settings", href: "/admin/store/settings" },
-  { label: "Branding", href: "/admin/store/branding" },
+  { label: "Brand assets", href: "/admin/store/branding" },
+  { label: "Theme editor", href: "/admin/store/theme" },
 ];
 
 export function getDashboardNavigation(

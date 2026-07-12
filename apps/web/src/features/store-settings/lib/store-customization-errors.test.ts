@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   getStoreCustomizationValidationMessages,
   isStoreCustomizationAccessError,
+  isThemeRevisionConflict,
 } from "./store-customization-errors";
 
 describe("store-customization-errors", () => {
@@ -44,4 +45,12 @@ describe("store-customization-errors", () => {
 
     expect(isStoreCustomizationAccessError(error)).toBe(true);
   });
+  it("detects an optimistic-concurrency theme conflict", () => {
+    const error = new ApiError(409, "Conflict", {
+      code: "THEME_REVISION_CONFLICT",
+    });
+
+    expect(isThemeRevisionConflict(error)).toBe(true);
+  });
+
 });

@@ -23,7 +23,9 @@
     "contracts:generate": "pnpm --filter @brandcanvas/contracts generate",
     "contracts:sync": "pnpm api:openapi && pnpm contracts:generate",
     "contracts:check": "pnpm contracts:sync && git diff --exit-code -- packages/contracts/openapi packages/contracts/src/generated",
-    "seed:super-admin": "pnpm --filter @brandcanvas/api seed:super-admin"
+    "seed:super-admin": "pnpm --filter @brandcanvas/api seed:super-admin",
+    "rules:check": "node scripts/check-repository-rules.mjs",
+    "verify:store-customization": "pnpm contracts:check && pnpm --filter @brandcanvas/api test && pnpm --filter @brandcanvas/web test && pnpm typecheck && pnpm build && pnpm rules:check"
   },
   "devDependencies": {
     "prettier": "3.9.5",

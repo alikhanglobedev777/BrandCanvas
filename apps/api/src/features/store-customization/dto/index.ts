@@ -1,7 +1,10 @@
 export {
-  RegisterStoreAssetDto,
+  STORE_ASSET_CATEGORIES,
+  StoreAssetListResponseDto,
   StoreAssetResponseDto,
   StoreCustomizationMessageDto,
+  UploadStoreAssetDto,
+  type StoreAssetCategoryValue,
 } from "./store-asset.dto";
 export {
   StoreSettingsResponseDto,
@@ -10,6 +13,7 @@ export {
 } from "./store-settings.dto";
 export { StoreSlugParamDto } from "./store-slug-param.dto";
 export {
+  PublishThemeDto,
   SaveThemeDraftDto,
   STORE_THEME_FONTS,
   STORE_THEME_HEADER_LAYOUTS,

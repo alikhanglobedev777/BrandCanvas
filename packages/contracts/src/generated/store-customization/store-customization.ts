@@ -19,14 +19,16 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
-  RegisterStoreAssetDto,
+  PublishThemeDto,
   SaveThemeDraftDto,
+  StoreAssetListResponseDto,
   StoreAssetResponseDto,
   StoreCustomizationMessageDto,
   StoreSettingsResponseDto,
   StoreThemeResponseDto,
   ThemeVersionListResponseDto,
   UpdateStoreSettingsDto,
+  UploadStoreAssetDto,
 } from "../models";
 
 import { apiFetcher } from "../../client/api-fetcher";
@@ -717,6 +719,7 @@ export const getSellerStoreCustomizationPublishUrl = () => {
 };
 
 export const sellerStoreCustomizationPublish = async (
+  publishThemeDto: PublishThemeDto,
   options?: RequestInit,
 ): Promise<StoreThemeResponseDto> => {
   return apiFetcher<StoreThemeResponseDto>(
@@ -724,6 +727,8 @@ export const sellerStoreCustomizationPublish = async (
     {
       ...options,
       method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(publishThemeDto),
     },
   );
 };
@@ -735,14 +740,14 @@ export const getSellerStoreCustomizationPublishMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof sellerStoreCustomizationPublish>>,
     TError,
-    void,
+    { data: BodyType<PublishThemeDto> },
     TContext
   >;
   request?: SecondParameter<typeof apiFetcher>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof sellerStoreCustomizationPublish>>,
   TError,
-  void,
+  { data: BodyType<PublishThemeDto> },
   TContext
 > => {
   const mutationKey = ["sellerStoreCustomizationPublish"];
@@ -756,9 +761,11 @@ export const getSellerStoreCustomizationPublishMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof sellerStoreCustomizationPublish>>,
-    void
-  > = () => {
-    return sellerStoreCustomizationPublish(requestOptions);
+    { data: BodyType<PublishThemeDto> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return sellerStoreCustomizationPublish(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -767,7 +774,8 @@ export const getSellerStoreCustomizationPublishMutationOptions = <
 export type SellerStoreCustomizationPublishMutationResult = NonNullable<
   Awaited<ReturnType<typeof sellerStoreCustomizationPublish>>
 >;
-
+export type SellerStoreCustomizationPublishMutationBody =
+  BodyType<PublishThemeDto>;
 export type SellerStoreCustomizationPublishMutationError = ErrorType<unknown>;
 
 export const useSellerStoreCustomizationPublish = <
@@ -778,7 +786,7 @@ export const useSellerStoreCustomizationPublish = <
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof sellerStoreCustomizationPublish>>,
       TError,
-      void,
+      { data: BodyType<PublishThemeDto> },
       TContext
     >;
     request?: SecondParameter<typeof apiFetcher>;
@@ -787,7 +795,7 @@ export const useSellerStoreCustomizationPublish = <
 ): UseMutationResult<
   Awaited<ReturnType<typeof sellerStoreCustomizationPublish>>,
   TError,
-  void,
+  { data: BodyType<PublishThemeDto> },
   TContext
 > => {
   return useMutation(
@@ -1036,46 +1044,203 @@ export const useSellerStoreCustomizationRollback = <
     queryClient,
   );
 };
-export const getSellerStoreCustomizationUpsertAssetUrl = () => {
+export const getSellerStoreCustomizationListAssetsUrl = () => {
   return `/api/v1/seller/store-customization/assets`;
 };
 
-/**
- * @summary Register or update store asset metadata
- */
-export const sellerStoreCustomizationUpsertAsset = async (
-  registerStoreAssetDto: RegisterStoreAssetDto,
+export const sellerStoreCustomizationListAssets = async (
   options?: RequestInit,
-): Promise<StoreAssetResponseDto> => {
-  return apiFetcher<StoreAssetResponseDto>(
-    getSellerStoreCustomizationUpsertAssetUrl(),
+): Promise<StoreAssetListResponseDto> => {
+  return apiFetcher<StoreAssetListResponseDto>(
+    getSellerStoreCustomizationListAssetsUrl(),
     {
       ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(registerStoreAssetDto),
+      method: "GET",
     },
   );
 };
 
-export const getSellerStoreCustomizationUpsertAssetMutationOptions = <
+export const getSellerStoreCustomizationListAssetsQueryKey = () => {
+  return [`/api/v1/seller/store-customization/assets`] as const;
+};
+
+export const getSellerStoreCustomizationListAssetsQueryOptions = <
+  TData = Awaited<ReturnType<typeof sellerStoreCustomizationListAssets>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof sellerStoreCustomizationListAssets>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getSellerStoreCustomizationListAssetsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof sellerStoreCustomizationListAssets>>
+  > = ({ signal }) =>
+    sellerStoreCustomizationListAssets({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof sellerStoreCustomizationListAssets>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SellerStoreCustomizationListAssetsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof sellerStoreCustomizationListAssets>>
+>;
+export type SellerStoreCustomizationListAssetsQueryError = ErrorType<unknown>;
+
+export function useSellerStoreCustomizationListAssets<
+  TData = Awaited<ReturnType<typeof sellerStoreCustomizationListAssets>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof sellerStoreCustomizationListAssets>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof sellerStoreCustomizationListAssets>>,
+          TError,
+          Awaited<ReturnType<typeof sellerStoreCustomizationListAssets>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useSellerStoreCustomizationListAssets<
+  TData = Awaited<ReturnType<typeof sellerStoreCustomizationListAssets>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof sellerStoreCustomizationListAssets>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof sellerStoreCustomizationListAssets>>,
+          TError,
+          Awaited<ReturnType<typeof sellerStoreCustomizationListAssets>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useSellerStoreCustomizationListAssets<
+  TData = Awaited<ReturnType<typeof sellerStoreCustomizationListAssets>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof sellerStoreCustomizationListAssets>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useSellerStoreCustomizationListAssets<
+  TData = Awaited<ReturnType<typeof sellerStoreCustomizationListAssets>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof sellerStoreCustomizationListAssets>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getSellerStoreCustomizationListAssetsQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getSellerStoreCustomizationUploadAssetUrl = (
+  category: "logo" | "favicon",
+) => {
+  return `/api/v1/seller/store-customization/assets/${category}/upload`;
+};
+
+export const sellerStoreCustomizationUploadAsset = async (
+  category: "logo" | "favicon",
+  uploadStoreAssetDto: UploadStoreAssetDto,
+  options?: RequestInit,
+): Promise<StoreAssetResponseDto> => {
+  const formData = new FormData();
+  formData.append(`file`, uploadStoreAssetDto.file);
+
+  return apiFetcher<StoreAssetResponseDto>(
+    getSellerStoreCustomizationUploadAssetUrl(category),
+    {
+      ...options,
+      method: "POST",
+      body: formData,
+    },
+  );
+};
+
+export const getSellerStoreCustomizationUploadAssetMutationOptions = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof sellerStoreCustomizationUpsertAsset>>,
+    Awaited<ReturnType<typeof sellerStoreCustomizationUploadAsset>>,
     TError,
-    { data: BodyType<RegisterStoreAssetDto> },
+    { category: "logo" | "favicon"; data: BodyType<UploadStoreAssetDto> },
     TContext
   >;
   request?: SecondParameter<typeof apiFetcher>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof sellerStoreCustomizationUpsertAsset>>,
+  Awaited<ReturnType<typeof sellerStoreCustomizationUploadAsset>>,
   TError,
-  { data: BodyType<RegisterStoreAssetDto> },
+  { category: "logo" | "favicon"; data: BodyType<UploadStoreAssetDto> },
   TContext
 > => {
-  const mutationKey = ["sellerStoreCustomizationUpsertAsset"];
+  const mutationKey = ["sellerStoreCustomizationUploadAsset"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -1085,50 +1250,47 @@ export const getSellerStoreCustomizationUpsertAssetMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof sellerStoreCustomizationUpsertAsset>>,
-    { data: BodyType<RegisterStoreAssetDto> }
+    Awaited<ReturnType<typeof sellerStoreCustomizationUploadAsset>>,
+    { category: "logo" | "favicon"; data: BodyType<UploadStoreAssetDto> }
   > = (props) => {
-    const { data } = props ?? {};
+    const { category, data } = props ?? {};
 
-    return sellerStoreCustomizationUpsertAsset(data, requestOptions);
+    return sellerStoreCustomizationUploadAsset(category, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type SellerStoreCustomizationUpsertAssetMutationResult = NonNullable<
-  Awaited<ReturnType<typeof sellerStoreCustomizationUpsertAsset>>
+export type SellerStoreCustomizationUploadAssetMutationResult = NonNullable<
+  Awaited<ReturnType<typeof sellerStoreCustomizationUploadAsset>>
 >;
-export type SellerStoreCustomizationUpsertAssetMutationBody =
-  BodyType<RegisterStoreAssetDto>;
-export type SellerStoreCustomizationUpsertAssetMutationError =
+export type SellerStoreCustomizationUploadAssetMutationBody =
+  BodyType<UploadStoreAssetDto>;
+export type SellerStoreCustomizationUploadAssetMutationError =
   ErrorType<unknown>;
 
-/**
- * @summary Register or update store asset metadata
- */
-export const useSellerStoreCustomizationUpsertAsset = <
+export const useSellerStoreCustomizationUploadAsset = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof sellerStoreCustomizationUpsertAsset>>,
+      Awaited<ReturnType<typeof sellerStoreCustomizationUploadAsset>>,
       TError,
-      { data: BodyType<RegisterStoreAssetDto> },
+      { category: "logo" | "favicon"; data: BodyType<UploadStoreAssetDto> },
       TContext
     >;
     request?: SecondParameter<typeof apiFetcher>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof sellerStoreCustomizationUpsertAsset>>,
+  Awaited<ReturnType<typeof sellerStoreCustomizationUploadAsset>>,
   TError,
-  { data: BodyType<RegisterStoreAssetDto> },
+  { category: "logo" | "favicon"; data: BodyType<UploadStoreAssetDto> },
   TContext
 > => {
   return useMutation(
-    getSellerStoreCustomizationUpsertAssetMutationOptions(options),
+    getSellerStoreCustomizationUploadAssetMutationOptions(options),
     queryClient,
   );
 };
@@ -1931,6 +2093,7 @@ export const getAdminStoreCustomizationPublishUrl = (storeId: string) => {
 
 export const adminStoreCustomizationPublish = async (
   storeId: string,
+  publishThemeDto: PublishThemeDto,
   options?: RequestInit,
 ): Promise<StoreThemeResponseDto> => {
   return apiFetcher<StoreThemeResponseDto>(
@@ -1938,6 +2101,8 @@ export const adminStoreCustomizationPublish = async (
     {
       ...options,
       method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(publishThemeDto),
     },
   );
 };
@@ -1949,14 +2114,14 @@ export const getAdminStoreCustomizationPublishMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof adminStoreCustomizationPublish>>,
     TError,
-    { storeId: string },
+    { storeId: string; data: BodyType<PublishThemeDto> },
     TContext
   >;
   request?: SecondParameter<typeof apiFetcher>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof adminStoreCustomizationPublish>>,
   TError,
-  { storeId: string },
+  { storeId: string; data: BodyType<PublishThemeDto> },
   TContext
 > => {
   const mutationKey = ["adminStoreCustomizationPublish"];
@@ -1970,11 +2135,11 @@ export const getAdminStoreCustomizationPublishMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof adminStoreCustomizationPublish>>,
-    { storeId: string }
+    { storeId: string; data: BodyType<PublishThemeDto> }
   > = (props) => {
-    const { storeId } = props ?? {};
+    const { storeId, data } = props ?? {};
 
-    return adminStoreCustomizationPublish(storeId, requestOptions);
+    return adminStoreCustomizationPublish(storeId, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -1983,7 +2148,8 @@ export const getAdminStoreCustomizationPublishMutationOptions = <
 export type AdminStoreCustomizationPublishMutationResult = NonNullable<
   Awaited<ReturnType<typeof adminStoreCustomizationPublish>>
 >;
-
+export type AdminStoreCustomizationPublishMutationBody =
+  BodyType<PublishThemeDto>;
 export type AdminStoreCustomizationPublishMutationError = ErrorType<unknown>;
 
 export const useAdminStoreCustomizationPublish = <
@@ -1994,7 +2160,7 @@ export const useAdminStoreCustomizationPublish = <
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof adminStoreCustomizationPublish>>,
       TError,
-      { storeId: string },
+      { storeId: string; data: BodyType<PublishThemeDto> },
       TContext
     >;
     request?: SecondParameter<typeof apiFetcher>;
@@ -2003,7 +2169,7 @@ export const useAdminStoreCustomizationPublish = <
 ): UseMutationResult<
   Awaited<ReturnType<typeof adminStoreCustomizationPublish>>,
   TError,
-  { storeId: string },
+  { storeId: string; data: BodyType<PublishThemeDto> },
   TContext
 > => {
   return useMutation(
@@ -2276,44 +2442,231 @@ export const useAdminStoreCustomizationRollback = <
     queryClient,
   );
 };
-export const getAdminStoreCustomizationUpsertAssetUrl = (storeId: string) => {
+export const getAdminStoreCustomizationListAssetsUrl = (storeId: string) => {
   return `/api/v1/admin/stores/${storeId}/customization/assets`;
 };
 
-export const adminStoreCustomizationUpsertAsset = async (
+export const adminStoreCustomizationListAssets = async (
   storeId: string,
-  registerStoreAssetDto: RegisterStoreAssetDto,
   options?: RequestInit,
-): Promise<StoreAssetResponseDto> => {
-  return apiFetcher<StoreAssetResponseDto>(
-    getAdminStoreCustomizationUpsertAssetUrl(storeId),
+): Promise<StoreAssetListResponseDto> => {
+  return apiFetcher<StoreAssetListResponseDto>(
+    getAdminStoreCustomizationListAssetsUrl(storeId),
     {
       ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(registerStoreAssetDto),
+      method: "GET",
     },
   );
 };
 
-export const getAdminStoreCustomizationUpsertAssetMutationOptions = <
+export const getAdminStoreCustomizationListAssetsQueryKey = (
+  storeId: string,
+) => {
+  return [`/api/v1/admin/stores/${storeId}/customization/assets`] as const;
+};
+
+export const getAdminStoreCustomizationListAssetsQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminStoreCustomizationListAssets>>,
+  TError = ErrorType<unknown>,
+>(
+  storeId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminStoreCustomizationListAssets>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getAdminStoreCustomizationListAssetsQueryKey(storeId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminStoreCustomizationListAssets>>
+  > = ({ signal }) =>
+    adminStoreCustomizationListAssets(storeId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: storeId !== null && storeId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminStoreCustomizationListAssets>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminStoreCustomizationListAssetsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminStoreCustomizationListAssets>>
+>;
+export type AdminStoreCustomizationListAssetsQueryError = ErrorType<unknown>;
+
+export function useAdminStoreCustomizationListAssets<
+  TData = Awaited<ReturnType<typeof adminStoreCustomizationListAssets>>,
+  TError = ErrorType<unknown>,
+>(
+  storeId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminStoreCustomizationListAssets>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminStoreCustomizationListAssets>>,
+          TError,
+          Awaited<ReturnType<typeof adminStoreCustomizationListAssets>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminStoreCustomizationListAssets<
+  TData = Awaited<ReturnType<typeof adminStoreCustomizationListAssets>>,
+  TError = ErrorType<unknown>,
+>(
+  storeId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminStoreCustomizationListAssets>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminStoreCustomizationListAssets>>,
+          TError,
+          Awaited<ReturnType<typeof adminStoreCustomizationListAssets>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdminStoreCustomizationListAssets<
+  TData = Awaited<ReturnType<typeof adminStoreCustomizationListAssets>>,
+  TError = ErrorType<unknown>,
+>(
+  storeId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminStoreCustomizationListAssets>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useAdminStoreCustomizationListAssets<
+  TData = Awaited<ReturnType<typeof adminStoreCustomizationListAssets>>,
+  TError = ErrorType<unknown>,
+>(
+  storeId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminStoreCustomizationListAssets>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAdminStoreCustomizationListAssetsQueryOptions(
+    storeId,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getAdminStoreCustomizationUploadAssetUrl = (
+  storeId: string,
+  category: "logo" | "favicon",
+) => {
+  return `/api/v1/admin/stores/${storeId}/customization/assets/${category}/upload`;
+};
+
+export const adminStoreCustomizationUploadAsset = async (
+  storeId: string,
+  category: "logo" | "favicon",
+  uploadStoreAssetDto: UploadStoreAssetDto,
+  options?: RequestInit,
+): Promise<StoreAssetResponseDto> => {
+  const formData = new FormData();
+  formData.append(`file`, uploadStoreAssetDto.file);
+
+  return apiFetcher<StoreAssetResponseDto>(
+    getAdminStoreCustomizationUploadAssetUrl(storeId, category),
+    {
+      ...options,
+      method: "POST",
+      body: formData,
+    },
+  );
+};
+
+export const getAdminStoreCustomizationUploadAssetMutationOptions = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof adminStoreCustomizationUpsertAsset>>,
+    Awaited<ReturnType<typeof adminStoreCustomizationUploadAsset>>,
     TError,
-    { storeId: string; data: BodyType<RegisterStoreAssetDto> },
+    {
+      storeId: string;
+      category: "logo" | "favicon";
+      data: BodyType<UploadStoreAssetDto>;
+    },
     TContext
   >;
   request?: SecondParameter<typeof apiFetcher>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof adminStoreCustomizationUpsertAsset>>,
+  Awaited<ReturnType<typeof adminStoreCustomizationUploadAsset>>,
   TError,
-  { storeId: string; data: BodyType<RegisterStoreAssetDto> },
+  {
+    storeId: string;
+    category: "logo" | "favicon";
+    data: BodyType<UploadStoreAssetDto>;
+  },
   TContext
 > => {
-  const mutationKey = ["adminStoreCustomizationUpsertAsset"];
+  const mutationKey = ["adminStoreCustomizationUploadAsset"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -2323,47 +2676,64 @@ export const getAdminStoreCustomizationUpsertAssetMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof adminStoreCustomizationUpsertAsset>>,
-    { storeId: string; data: BodyType<RegisterStoreAssetDto> }
+    Awaited<ReturnType<typeof adminStoreCustomizationUploadAsset>>,
+    {
+      storeId: string;
+      category: "logo" | "favicon";
+      data: BodyType<UploadStoreAssetDto>;
+    }
   > = (props) => {
-    const { storeId, data } = props ?? {};
+    const { storeId, category, data } = props ?? {};
 
-    return adminStoreCustomizationUpsertAsset(storeId, data, requestOptions);
+    return adminStoreCustomizationUploadAsset(
+      storeId,
+      category,
+      data,
+      requestOptions,
+    );
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type AdminStoreCustomizationUpsertAssetMutationResult = NonNullable<
-  Awaited<ReturnType<typeof adminStoreCustomizationUpsertAsset>>
+export type AdminStoreCustomizationUploadAssetMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminStoreCustomizationUploadAsset>>
 >;
-export type AdminStoreCustomizationUpsertAssetMutationBody =
-  BodyType<RegisterStoreAssetDto>;
-export type AdminStoreCustomizationUpsertAssetMutationError =
+export type AdminStoreCustomizationUploadAssetMutationBody =
+  BodyType<UploadStoreAssetDto>;
+export type AdminStoreCustomizationUploadAssetMutationError =
   ErrorType<unknown>;
 
-export const useAdminStoreCustomizationUpsertAsset = <
+export const useAdminStoreCustomizationUploadAsset = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof adminStoreCustomizationUpsertAsset>>,
+      Awaited<ReturnType<typeof adminStoreCustomizationUploadAsset>>,
       TError,
-      { storeId: string; data: BodyType<RegisterStoreAssetDto> },
+      {
+        storeId: string;
+        category: "logo" | "favicon";
+        data: BodyType<UploadStoreAssetDto>;
+      },
       TContext
     >;
     request?: SecondParameter<typeof apiFetcher>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof adminStoreCustomizationUpsertAsset>>,
+  Awaited<ReturnType<typeof adminStoreCustomizationUploadAsset>>,
   TError,
-  { storeId: string; data: BodyType<RegisterStoreAssetDto> },
+  {
+    storeId: string;
+    category: "logo" | "favicon";
+    data: BodyType<UploadStoreAssetDto>;
+  },
   TContext
 > => {
   return useMutation(
-    getAdminStoreCustomizationUpsertAssetMutationOptions(options),
+    getAdminStoreCustomizationUploadAssetMutationOptions(options),
     queryClient,
   );
 };

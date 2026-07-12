@@ -170,6 +170,11 @@ export const storeSettings = pgTable(
     description: text("description"),
     contactEmail: varchar("contact_email", { length: 254 }),
     contactPhone: varchar("contact_phone", { length: 32 }),
+    businessAddress: text("business_address"),
+    storePolicies: text("store_policies"),
+    defaultCurrency: varchar("default_currency", { length: 3 })
+      .default("PKR")
+      .notNull(),
     facebookUrl: text("facebook_url"),
     instagramUrl: text("instagram_url"),
     youtubeUrl: text("youtube_url"),
@@ -177,7 +182,13 @@ export const storeSettings = pgTable(
     xUrl: text("x_url"),
     ...timestamps,
   },
-  (table) => [uniqueIndex("store_settings_store_unique").on(table.storeId)],
+  (table) => [
+    uniqueIndex("store_settings_store_unique").on(table.storeId),
+    check(
+      "store_settings_currency_format",
+      sql`${table.defaultCurrency} ~ '^[A-Z]{3}$'`,
+    ),
+  ],
 );
 
 export const storeAssets = pgTable(

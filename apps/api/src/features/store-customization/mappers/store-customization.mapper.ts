@@ -5,6 +5,7 @@ import type {
 } from "../entities";
 import {
   StoreAssetResponseDto,
+  type StoreAssetCategoryValue,
   StoreSettingsResponseDto,
   StoreThemeResponseDto,
 } from "../dto";
@@ -20,6 +21,9 @@ export class StoreCustomizationMapper {
       description: entity.description,
       contactEmail: entity.contactEmail,
       contactPhone: entity.contactPhone,
+      businessAddress: entity.businessAddress,
+      storePolicies: entity.storePolicies,
+      defaultCurrency: entity.defaultCurrency,
       socialLinks: {
         facebookUrl: entity.facebookUrl,
         instagramUrl: entity.instagramUrl,
@@ -51,13 +55,18 @@ export class StoreCustomizationMapper {
       },
       header: {
         layout: entity.headerLayout,
+        style: entity.headerStyle,
         sticky: entity.headerSticky,
         showLogo: entity.headerShowLogo,
       },
       footer: {
+        style: entity.footerStyle,
         showContact: entity.footerShowContact,
         text: entity.footerText,
       },
+      buttonRadius: entity.buttonRadius,
+      cardRadius: entity.cardRadius,
+      productCardStyle: entity.productCardStyle,
       publishedAt: entity.publishedAt?.toISOString() ?? null,
       createdAt: entity.createdAt.toISOString(),
       updatedAt: entity.updatedAt.toISOString(),
@@ -68,7 +77,7 @@ export class StoreCustomizationMapper {
     return {
       id: entity.id,
       storeId: entity.storeId,
-      category: entity.category,
+      category: entity.category as StoreAssetCategoryValue,
       storageProvider: entity.storageProvider,
       publicUrl: entity.publicUrl,
       originalFilename: entity.originalFilename,

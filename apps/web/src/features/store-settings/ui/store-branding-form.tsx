@@ -31,12 +31,21 @@ import { useEffect, useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
 import { getApiErrorMessage } from "@/shared/lib/get-api-error-message";
 import { useStoreBrandingForm } from "../hooks/use-store-branding-form";
-import { getStoreCustomizationValidationMessages } from "../lib/store-customization-errors";
-import { createStoreBrandingFormValues } from "../lib/store-settings-form";
+import {
+  getStoreCustomizationValidationMessages,
+  isThemeRevisionConflict,
+} from "../lib/store-customization-errors";
+import {
+  createStoreBrandingFormValues,
+  toSaveThemeDraftRequest,
+} from "../lib/store-settings-form";
 import {
   STORE_BRANDING_FIELD_PATHS,
   storeFontOptions,
+  storeFooterStyleOptions,
   storeHeaderLayoutOptions,
+  storeHeaderStyleOptions,
+  storeProductCardStyleOptions,
   type StoreBrandingFieldPath,
   type StoreBrandingFormValues,
 } from "../model/store-branding-options";
@@ -77,8 +86,9 @@ export interface StoreBrandingFormProps {
   rollingBack: boolean;
   successMessage: string | null;
   onSaveDraft: (data: SaveThemeDraftDto) => void;
-  onPublish: () => void;
+  onPublish: (expectedRevision: number) => void;
   onRollback: (version: number) => void;
+  onReloadDraft: () => void;
 }
 
 export function StoreBrandingForm({
@@ -95,6 +105,7 @@ export function StoreBrandingForm({
   onSaveDraft,
   onPublish,
   onRollback,
+  onReloadDraft,
 }: StoreBrandingFormProps) {
   const [rollbackVersion, setRollbackVersion] = useState<number | null>(null);
   const [publishOpen, setPublishOpen] = useState(false);
@@ -159,18 +170,38 @@ export function StoreBrandingForm({
         component="form"
         spacing={3}
         noValidate
-        onSubmit={handleSubmit((values) => onSaveDraft(values))}
+        onSubmit={handleSubmit((values) =>
+          onSaveDraft(toSaveThemeDraftRequest(values, draft.revision)),
+        )}
       >
         {successMessage ? (
           <Alert severity="success">{successMessage}</Alert>
         ) : null}
         {saveError ? (
-          <Alert severity="error">
+          <Alert
+            severity="error"
+            action={
+              isThemeRevisionConflict(saveError) ? (
+                <AppButton color="inherit" size="small" onClick={onReloadDraft}>
+                  Reload draft
+                </AppButton>
+              ) : undefined
+            }
+          >
             {getApiErrorMessage(saveError, "Unable to save the theme draft.")}
           </Alert>
         ) : null}
         {publishError ? (
-          <Alert severity="error">
+          <Alert
+            severity="error"
+            action={
+              isThemeRevisionConflict(publishError) ? (
+                <AppButton color="inherit" size="small" onClick={onReloadDraft}>
+                  Reload draft
+                </AppButton>
+              ) : undefined
+            }
+          >
             {getApiErrorMessage(
               publishError,
               "Unable to publish the theme draft.",
@@ -203,37 +234,6 @@ export function StoreBrandingForm({
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, xl: 7 }}>
             <Stack spacing={3}>
-              <Paper variant="outlined" sx={{ p: 3 }}>
-                <Stack spacing={2.5}>
-                  <Typography variant="h6">Brand assets</Typography>
-                  <Alert severity="info">
-                    Logo and favicon uploads are not available through the
-                    current generated seller contracts yet. This page ships the
-                    full theme-draft workflow now and keeps asset fields visible
-                    in a disabled state until the upload and asset-read APIs are
-                    added.
-                  </Alert>
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <TextField
-                        label="Logo"
-                        disabled
-                        placeholder="Upload contract required"
-                        helperText="Current asset upload and retrieval are not exposed yet."
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <TextField
-                        label="Favicon"
-                        disabled
-                        placeholder="Upload contract required"
-                        helperText="Current asset upload and retrieval are not exposed yet."
-                      />
-                    </Grid>
-                  </Grid>
-                </Stack>
-              </Paper>
-
               <Paper variant="outlined" sx={{ p: 3 }}>
                 <Stack spacing={2.5}>
                   <Typography variant="h6">Theme colors</Typography>
@@ -343,10 +343,43 @@ export function StoreBrandingForm({
                             <InputLabel>Header layout</InputLabel>
                             <Select {...field} label="Header layout">
                               {storeHeaderLayoutOptions.map((option) => (
-                                <MenuItem
-                                  key={option.value}
-                                  value={option.value}
-                                >
+                                <MenuItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        )}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Controller
+                        control={control}
+                        name="header.style"
+                        render={({ field }) => (
+                          <FormControl fullWidth>
+                            <InputLabel>Header style</InputLabel>
+                            <Select {...field} label="Header style">
+                              {storeHeaderStyleOptions.map((option) => (
+                                <MenuItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        )}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Controller
+                        control={control}
+                        name="footer.style"
+                        render={({ field }) => (
+                          <FormControl fullWidth>
+                            <InputLabel>Footer style</InputLabel>
+                            <Select {...field} label="Footer style">
+                              {storeFooterStyleOptions.map((option) => (
+                                <MenuItem key={option.value} value={option.value}>
                                   {option.label}
                                 </MenuItem>
                               ))}
@@ -380,9 +413,7 @@ export function StoreBrandingForm({
                             control={
                               <Switch
                                 checked={field.value}
-                                onChange={(_, checked) =>
-                                  field.onChange(checked)
-                                }
+                                onChange={(_, checked) => field.onChange(checked)}
                               />
                             }
                             label="Show logo area"
@@ -399,9 +430,7 @@ export function StoreBrandingForm({
                             control={
                               <Switch
                                 checked={field.value}
-                                onChange={(_, checked) =>
-                                  field.onChange(checked)
-                                }
+                                onChange={(_, checked) => field.onChange(checked)}
                               />
                             }
                             label="Sticky header"
@@ -418,13 +447,79 @@ export function StoreBrandingForm({
                             control={
                               <Switch
                                 checked={field.value}
-                                onChange={(_, checked) =>
-                                  field.onChange(checked)
-                                }
+                                onChange={(_, checked) => field.onChange(checked)}
                               />
                             }
                             label="Show contact details"
                           />
+                        )}
+                      />
+                    </Grid>
+                  </Grid>
+                </Stack>
+              </Paper>
+
+              <Paper variant="outlined" sx={{ p: 3 }}>
+                <Stack spacing={2.5}>
+                  <Typography variant="h6">Cards and controls</Typography>
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 12, md: 4 }}>
+                      <Controller
+                        control={control}
+                        name="buttonRadius"
+                        rules={{
+                          min: { value: 0, message: "Use 0 or more." },
+                          max: { value: 32, message: "Use 32 or less." },
+                        }}
+                        render={({ field }) => (
+                          <TextField
+                            {...field}
+                            type="number"
+                            label="Button radius"
+                            error={Boolean(errors.buttonRadius)}
+                            helperText={errors.buttonRadius?.message ?? "0-32 pixels"}
+                            slotProps={{ htmlInput: { min: 0, max: 32, step: 1 } }}
+                            onChange={(event) => field.onChange(Number(event.target.value))}
+                          />
+                        )}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 4 }}>
+                      <Controller
+                        control={control}
+                        name="cardRadius"
+                        rules={{
+                          min: { value: 0, message: "Use 0 or more." },
+                          max: { value: 32, message: "Use 32 or less." },
+                        }}
+                        render={({ field }) => (
+                          <TextField
+                            {...field}
+                            type="number"
+                            label="Card radius"
+                            error={Boolean(errors.cardRadius)}
+                            helperText={errors.cardRadius?.message ?? "0-32 pixels"}
+                            slotProps={{ htmlInput: { min: 0, max: 32, step: 1 } }}
+                            onChange={(event) => field.onChange(Number(event.target.value))}
+                          />
+                        )}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 4 }}>
+                      <Controller
+                        control={control}
+                        name="productCardStyle"
+                        render={({ field }) => (
+                          <FormControl fullWidth>
+                            <InputLabel>Product card style</InputLabel>
+                            <Select {...field} label="Product card style">
+                              {storeProductCardStyleOptions.map((option) => (
+                                <MenuItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
                         )}
                       />
                     </Grid>
@@ -512,6 +607,7 @@ export function StoreBrandingForm({
                               variant="outlined"
                               disabled={
                                 rollingBack ||
+                                isDirty ||
                                 version.lifecycle === "published" ||
                                 version.publishedVersion === null
                               }
@@ -578,7 +674,7 @@ export function StoreBrandingForm({
         loading={publishing}
         onClose={() => setPublishOpen(false)}
         onConfirm={() => {
-          onPublish();
+          onPublish(draft.revision);
           setPublishOpen(false);
         }}
       />

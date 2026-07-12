@@ -66,6 +66,11 @@ export function isStoreCustomizationAccessError(error: unknown): boolean {
   );
 }
 
+
+export function isThemeRevisionConflict(error: unknown): boolean {
+  return getStoreCustomizationErrorCode(error) === "THEME_REVISION_CONFLICT";
+}
+
 export function getStoreCustomizationValidationMessages(
   error: unknown,
 ): Record<string, string> {

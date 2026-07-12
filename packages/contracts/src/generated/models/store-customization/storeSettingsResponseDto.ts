@@ -14,6 +14,12 @@ export interface StoreSettingsResponseDto {
   contactEmail?: string | null;
   /** @nullable */
   contactPhone?: string | null;
+  /** @nullable */
+  businessAddress?: string | null;
+  /** @nullable */
+  storePolicies?: string | null;
+  /** @pattern ^[A-Z]{3}$ */
+  defaultCurrency: string;
   socialLinks: StoreSocialLinksDto;
   createdAt: string;
   updatedAt: string;

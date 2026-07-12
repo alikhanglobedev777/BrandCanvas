@@ -76,6 +76,31 @@ export class UpdateStoreSettingsDto {
   })
   contactPhone?: string | null;
 
+  @ApiPropertyOptional({ type: String, nullable: true, maxLength: 1000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  @Matches(PLAIN_TEXT_PATTERN, {
+    message: "businessAddress must not contain HTML.",
+  })
+  businessAddress?: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, maxLength: 10_000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10_000)
+  @Matches(PLAIN_TEXT_PATTERN, {
+    message: "storePolicies must not contain HTML.",
+  })
+  storePolicies?: string | null;
+
+  @ApiPropertyOptional({ example: "PKR", pattern: "^[A-Z]{3}$" })
+  @IsOptional()
+  @Matches(/^[A-Z]{3}$/, {
+    message: "defaultCurrency must be a three-letter uppercase code.",
+  })
+  defaultCurrency?: string;
+
   @ApiPropertyOptional({ type: StoreSocialLinksDto })
   @IsOptional()
   @ValidateNested()
@@ -96,6 +121,12 @@ export class StoreSettingsResponseDto {
   contactEmail!: string | null;
   @ApiPropertyOptional({ type: String, nullable: true })
   contactPhone!: string | null;
+  @ApiPropertyOptional({ type: String, nullable: true })
+  businessAddress!: string | null;
+  @ApiPropertyOptional({ type: String, nullable: true })
+  storePolicies!: string | null;
+  @ApiProperty({ example: "PKR", pattern: "^[A-Z]{3}$" })
+  defaultCurrency!: string;
   @ApiProperty({ type: StoreSocialLinksDto })
   socialLinks!: StoreSocialLinksDto;
   @ApiProperty({ format: "date-time" })

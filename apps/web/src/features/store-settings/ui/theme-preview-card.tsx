@@ -1,18 +1,18 @@
 "use client";
 
-import type {
-  SaveThemeDraftDto,
-  StoreSettingsResponseDto,
-} from "@brandcanvas/contracts";
+import type { StoreSettingsResponseDto } from "@brandcanvas/contracts";
+import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
+import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import type { StoreBrandingFormValues } from "../model/store-branding-options";
 
 function resolveFontFamily(
-  font: SaveThemeDraftDto["typography"]["headingFont"],
+  font: StoreBrandingFormValues["typography"]["headingFont"],
 ): string {
   switch (font) {
     case "system_serif":
@@ -30,54 +30,55 @@ function resolveFontFamily(
 }
 
 export interface ThemePreviewCardProps {
-  theme: SaveThemeDraftDto;
+  theme: StoreBrandingFormValues;
   settings: StoreSettingsResponseDto | undefined;
 }
 
 export function ThemePreviewCard({ theme, settings }: ThemePreviewCardProps) {
+  const minimalHeader = theme.header.style === "minimal";
+  const elevatedProductCard = theme.productCardStyle === "elevated";
+  const borderedProductCard = theme.productCardStyle === "bordered";
+
   return (
     <Card
       sx={{
         bgcolor: theme.colors.background,
         color: theme.colors.text,
         borderColor: theme.colors.secondary,
+        borderRadius: `${theme.cardRadius}px`,
       }}
     >
       <CardContent sx={{ p: 0 }}>
         <Stack
           spacing={0}
           sx={{
-            minHeight: 360,
+            minHeight: 440,
             fontFamily: resolveFontFamily(theme.typography.bodyFont),
           }}
         >
           <Stack
-            direction={
-              theme.header.layout === "logo_centered" ? "column" : "row"
-            }
+            direction={theme.header.layout === "logo_centered" ? "column" : "row"}
             spacing={2}
             sx={{
-              alignItems:
-                theme.header.layout === "logo_centered" ? "center" : "center",
+              alignItems: "center",
               justifyContent:
                 theme.header.layout === "logo_centered"
                   ? "center"
                   : "space-between",
               px: 3,
               py: 2.5,
-              bgcolor: theme.colors.primary,
-              color: "#FFFFFF",
-              textAlign:
-                theme.header.layout === "logo_centered" ? "center" : "left",
+              bgcolor: minimalHeader ? theme.colors.background : theme.colors.primary,
+              color: minimalHeader ? theme.colors.text : "#FFFFFF",
+              borderBottom: minimalHeader ? "1px solid" : "none",
+              borderColor: theme.colors.secondary,
+              textAlign: theme.header.layout === "logo_centered" ? "center" : "left",
             }}
           >
             <Stack
               spacing={0.5}
               sx={{
                 alignItems:
-                  theme.header.layout === "logo_centered"
-                    ? "center"
-                    : "flex-start",
+                  theme.header.layout === "logo_centered" ? "center" : "flex-start",
               }}
             >
               <Typography
@@ -89,17 +90,22 @@ export function ThemePreviewCard({ theme, settings }: ThemePreviewCardProps) {
               >
                 {settings?.displayName ?? "Your store"}
               </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.88 }}>
+              <Typography variant="body2" sx={{ opacity: 0.8 }}>
                 {theme.header.showLogo ? "Logo visible" : "Text-first header"}
               </Typography>
             </Stack>
             <Chip
               label={theme.header.sticky ? "Sticky header" : "Static header"}
-              sx={{ bgcolor: "rgba(255,255,255,0.16)", color: "inherit" }}
+              variant={minimalHeader ? "outlined" : "filled"}
+              sx={
+                minimalHeader
+                  ? { borderColor: theme.colors.secondary, color: "inherit" }
+                  : { bgcolor: "rgba(255,255,255,0.16)", color: "inherit" }
+              }
             />
           </Stack>
 
-          <Stack spacing={2} sx={{ p: 3, flex: 1 }}>
+          <Stack spacing={2.5} sx={{ p: 3, flex: 1 }}>
             <Stack spacing={1}>
               <Typography
                 variant="h4"
@@ -112,32 +118,55 @@ export function ThemePreviewCard({ theme, settings }: ThemePreviewCardProps) {
               </Typography>
               <Typography color="inherit">
                 {settings?.description ||
-                  "Draft theme changes are previewed locally here before you publish them to customers."}
+                  "Draft theme changes are previewed locally before they are published to customers."}
               </Typography>
             </Stack>
 
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-              <Chip
-                label={`Primary ${theme.colors.primary}`}
-                sx={{ bgcolor: theme.colors.primary, color: "#FFFFFF" }}
-              />
-              <Chip
-                label={`Secondary ${theme.colors.secondary}`}
-                sx={{ bgcolor: theme.colors.secondary, color: "#FFFFFF" }}
-              />
-            </Stack>
+            <Paper
+              elevation={elevatedProductCard ? 4 : 0}
+              variant={borderedProductCard ? "outlined" : "elevation"}
+              sx={{
+                p: 2.5,
+                borderRadius: `${theme.cardRadius}px`,
+                borderColor: borderedProductCard ? theme.colors.secondary : "transparent",
+                bgcolor: theme.colors.background,
+                color: theme.colors.text,
+              }}
+            >
+              <Stack spacing={1.5}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontFamily: resolveFontFamily(theme.typography.headingFont),
+                    fontWeight: 750,
+                  }}
+                >
+                  Example product
+                </Typography>
+                <Typography variant="body2">PKR 2,500</Typography>
+                <Button
+                  variant="contained"
+                  sx={{
+                    alignSelf: "flex-start",
+                    bgcolor: theme.colors.primary,
+                    borderRadius: `${theme.buttonRadius}px`,
+                    "&:hover": { bgcolor: theme.colors.primary },
+                  }}
+                >
+                  Add to cart
+                </Button>
+              </Stack>
+            </Paper>
           </Stack>
 
-          <Divider
-            sx={{ borderColor: theme.colors.secondary, opacity: 0.35 }}
-          />
+          <Divider sx={{ borderColor: theme.colors.secondary, opacity: 0.35 }} />
 
           <Stack
-            direction={{ xs: "column", sm: "row" }}
+            direction={theme.footer.style === "columns" ? { xs: "column", sm: "row" } : "column"}
             spacing={2}
             sx={{
               p: 3,
-              alignItems: { sm: "center" },
+              alignItems: theme.footer.style === "columns" ? { sm: "center" } : "flex-start",
               justifyContent: "space-between",
             }}
           >

@@ -23,6 +23,9 @@ export function createStoreSettingsFormValues(
     description: settings.description ?? "",
     contactEmail: settings.contactEmail ?? "",
     contactPhone: settings.contactPhone ?? "",
+    businessAddress: settings.businessAddress ?? "",
+    storePolicies: settings.storePolicies ?? "",
+    defaultCurrency: settings.defaultCurrency,
     socialLinks: {
       facebookUrl: settings.socialLinks.facebookUrl ?? "",
       instagramUrl: settings.socialLinks.instagramUrl ?? "",
@@ -30,9 +33,6 @@ export function createStoreSettingsFormValues(
       tiktokUrl: settings.socialLinks.tiktokUrl ?? "",
       xUrl: settings.socialLinks.xUrl ?? "",
     },
-    businessAddress: "",
-    storePolicies: "",
-    defaultCurrency: "",
   };
 }
 
@@ -42,6 +42,9 @@ export function createEmptyStoreSettingsFormValues(): StoreSettingsFormValues {
     description: "",
     contactEmail: "",
     contactPhone: "",
+    businessAddress: "",
+    storePolicies: "",
+    defaultCurrency: "PKR",
     socialLinks: {
       facebookUrl: "",
       instagramUrl: "",
@@ -49,9 +52,6 @@ export function createEmptyStoreSettingsFormValues(): StoreSettingsFormValues {
       tiktokUrl: "",
       xUrl: "",
     },
-    businessAddress: "",
-    storePolicies: "",
-    defaultCurrency: "",
   };
 }
 
@@ -63,6 +63,9 @@ export function toStoreSettingsRequest(
     description: trimToNull(values.description),
     contactEmail: trimToNull(values.contactEmail),
     contactPhone: trimToNull(values.contactPhone),
+    businessAddress: trimToNull(values.businessAddress),
+    storePolicies: trimToNull(values.storePolicies),
+    defaultCurrency: values.defaultCurrency,
     socialLinks: {
       facebookUrl: trimToNull(values.socialLinks.facebookUrl),
       instagramUrl: trimToNull(values.socialLinks.instagramUrl),
@@ -84,6 +87,23 @@ export function createStoreBrandingFormValues(
     footer: {
       ...source.footer,
       text: source.footer.text ?? "",
+    },
+    buttonRadius: source.buttonRadius,
+    cardRadius: source.cardRadius,
+    productCardStyle: source.productCardStyle,
+  };
+}
+
+export function toSaveThemeDraftRequest(
+  values: StoreBrandingFormValues,
+  expectedRevision: number,
+): SaveThemeDraftDto {
+  return {
+    ...values,
+    expectedRevision,
+    footer: {
+      ...values.footer,
+      text: trimToNull(values.footer.text),
     },
   };
 }

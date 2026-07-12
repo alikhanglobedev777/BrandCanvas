@@ -1,13 +1,8 @@
-import {
-  ThemeHeaderDtoLayout,
-  ThemeTypographyDtoBodyFont,
-  ThemeTypographyDtoHeadingFont,
-  type SaveThemeDraftDto,
-} from "@brandcanvas/contracts";
+import type { SaveThemeDraftDto } from "@brandcanvas/contracts";
 
-export interface StoreBrandingFormValues extends SaveThemeDraftDto {
-  footer: {
-    showContact: boolean;
+export interface StoreBrandingFormValues
+  extends Omit<SaveThemeDraftDto, "expectedRevision" | "footer"> {
+  footer: Omit<SaveThemeDraftDto["footer"], "text"> & {
     text: string;
   };
 }
@@ -20,38 +15,78 @@ export type StoreBrandingFieldPath =
   | "typography.headingFont"
   | "typography.bodyFont"
   | "header.layout"
+  | "header.style"
   | "header.sticky"
   | "header.showLogo"
+  | "footer.style"
   | "footer.showContact"
-  | "footer.text";
+  | "footer.text"
+  | "buttonRadius"
+  | "cardRadius"
+  | "productCardStyle";
 
-export const STORE_BRANDING_FIELD_PATHS: Record<StoreBrandingFieldPath, true> =
-  {
-    "colors.primary": true,
-    "colors.secondary": true,
-    "colors.background": true,
-    "colors.text": true,
-    "typography.headingFont": true,
-    "typography.bodyFont": true,
-    "header.layout": true,
-    "header.sticky": true,
-    "header.showLogo": true,
-    "footer.showContact": true,
-    "footer.text": true,
-  };
+export const STORE_BRANDING_FIELD_PATHS: Record<StoreBrandingFieldPath, true> = {
+  "colors.primary": true,
+  "colors.secondary": true,
+  "colors.background": true,
+  "colors.text": true,
+  "typography.headingFont": true,
+  "typography.bodyFont": true,
+  "header.layout": true,
+  "header.style": true,
+  "header.sticky": true,
+  "header.showLogo": true,
+  "footer.style": true,
+  "footer.showContact": true,
+  "footer.text": true,
+  buttonRadius: true,
+  cardRadius: true,
+  productCardStyle: true,
+};
 
 export const storeFontOptions = [
-  { value: ThemeTypographyDtoHeadingFont.system_sans, label: "System Sans" },
-  { value: ThemeTypographyDtoHeadingFont.system_serif, label: "System Serif" },
-  { value: ThemeTypographyDtoHeadingFont.georgia, label: "Georgia" },
-  { value: ThemeTypographyDtoHeadingFont.arial, label: "Arial" },
-  { value: ThemeTypographyDtoHeadingFont.verdana, label: "Verdana" },
-] as const;
+  { value: "system_sans", label: "System Sans" },
+  { value: "system_serif", label: "System Serif" },
+  { value: "georgia", label: "Georgia" },
+  { value: "arial", label: "Arial" },
+  { value: "verdana", label: "Verdana" },
+] as const satisfies ReadonlyArray<{
+  value: SaveThemeDraftDto["typography"]["headingFont"];
+  label: string;
+}>;
 
 export const storeHeaderLayoutOptions = [
-  { value: ThemeHeaderDtoLayout.logo_left, label: "Logo left" },
-  { value: ThemeHeaderDtoLayout.logo_centered, label: "Logo centered" },
-] as const;
+  { value: "logo_left", label: "Logo left" },
+  { value: "logo_centered", label: "Logo centered" },
+] as const satisfies ReadonlyArray<{
+  value: SaveThemeDraftDto["header"]["layout"];
+  label: string;
+}>;
+
+export const storeHeaderStyleOptions = [
+  { value: "solid", label: "Solid color" },
+  { value: "minimal", label: "Minimal" },
+] as const satisfies ReadonlyArray<{
+  value: SaveThemeDraftDto["header"]["style"];
+  label: string;
+}>;
+
+export const storeFooterStyleOptions = [
+  { value: "simple", label: "Simple" },
+  { value: "columns", label: "Columns" },
+] as const satisfies ReadonlyArray<{
+  value: SaveThemeDraftDto["footer"]["style"];
+  label: string;
+}>;
+
+export const storeProductCardStyleOptions = [
+  { value: "minimal", label: "Minimal" },
+  { value: "bordered", label: "Bordered" },
+  { value: "elevated", label: "Elevated" },
+] as const satisfies ReadonlyArray<{
+  value: SaveThemeDraftDto["productCardStyle"];
+  label: string;
+}>;
 
 export const defaultStoreBrandingValues: StoreBrandingFormValues = {
   colors: {
@@ -61,16 +96,21 @@ export const defaultStoreBrandingValues: StoreBrandingFormValues = {
     text: "#111827",
   },
   typography: {
-    headingFont: ThemeTypographyDtoHeadingFont.system_sans,
-    bodyFont: ThemeTypographyDtoBodyFont.system_sans,
+    headingFont: "system_sans",
+    bodyFont: "system_sans",
   },
   header: {
-    layout: ThemeHeaderDtoLayout.logo_left,
+    layout: "logo_left",
+    style: "solid",
     sticky: true,
     showLogo: true,
   },
   footer: {
+    style: "simple",
     showContact: true,
     text: "",
   },
+  buttonRadius: 8,
+  cardRadius: 12,
+  productCardStyle: "bordered",
 };

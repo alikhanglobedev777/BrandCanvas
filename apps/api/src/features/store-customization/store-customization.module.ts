@@ -7,7 +7,7 @@ import {
   DrizzleStoreCustomizationRepository,
   StoreCustomizationRepository,
 } from "./repositories";
-import { StoreCustomizationService } from "./services";
+import { StoreAssetService, StoreCustomizationService } from "./services";
 import { StoreCustomizationPolicy } from "./policies";
 
 @Module({
@@ -18,6 +18,7 @@ import { StoreCustomizationPolicy } from "./policies";
   ],
   providers: [
     StoreCustomizationService,
+    StoreAssetService,
     StoreCustomizationAccessGuard,
     StoreCustomizationPolicy,
     DrizzleStoreCustomizationRepository,

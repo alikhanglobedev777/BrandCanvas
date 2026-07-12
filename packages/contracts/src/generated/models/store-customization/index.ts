@@ -3,21 +3,27 @@
  * Do not edit manually.
  */
 
-export * from "./registerStoreAssetDto";
-export * from "./registerStoreAssetDtoIsCurrent";
+export * from "./publishThemeDto";
 export * from "./saveThemeDraftDto";
+export * from "./saveThemeDraftDtoProductCardStyle";
+export * from "./storeAssetListResponseDto";
 export * from "./storeAssetResponseDto";
+export * from "./storeAssetResponseDtoCategory";
 export * from "./storeCustomizationMessageDto";
 export * from "./storeSettingsResponseDto";
 export * from "./storeSocialLinksDto";
 export * from "./storeThemeResponseDto";
 export * from "./storeThemeResponseDtoLifecycle";
+export * from "./storeThemeResponseDtoProductCardStyle";
 export * from "./themeColorsDto";
 export * from "./themeFooterDto";
+export * from "./themeFooterDtoStyle";
 export * from "./themeHeaderDto";
 export * from "./themeHeaderDtoLayout";
+export * from "./themeHeaderDtoStyle";
 export * from "./themeTypographyDto";
 export * from "./themeTypographyDtoBodyFont";
 export * from "./themeTypographyDtoHeadingFont";
 export * from "./themeVersionListResponseDto";
 export * from "./updateStoreSettingsDto";
+export * from "./uploadStoreAssetDto";

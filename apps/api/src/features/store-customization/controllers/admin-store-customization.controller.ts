@@ -9,27 +9,37 @@ import {
   Patch,
   Post,
   Put,
+  Req,
   UseGuards,
 } from "@nestjs/common";
 import {
+  ApiBody,
+  ApiConsumes,
   ApiCookieAuth,
+  ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiTags,
 } from "@nestjs/swagger";
+import type { FastifyRequest } from "fastify";
 import { Roles } from "../../../common/decorators/roles.decorator";
 import { CsrfGuard } from "../../../common/guards/csrf.guard";
 import {
-  RegisterStoreAssetDto,
+  PublishThemeDto,
   SaveThemeDraftDto,
+  STORE_ASSET_CATEGORIES,
+  StoreAssetListResponseDto,
   StoreAssetResponseDto,
   StoreCustomizationMessageDto,
   StoreSettingsResponseDto,
   StoreThemeResponseDto,
   ThemeVersionListResponseDto,
+  UploadStoreAssetDto,
   UpdateStoreSettingsDto,
 } from "../dto";
-import { StoreCustomizationService } from "../services";
+import { StoreAssetService, StoreCustomizationService } from "../services";
+import { readStoreAssetUpload } from "./read-store-asset-upload";
 
 @ApiTags("Store Customization")
 @ApiCookieAuth("brandcanvas_access")
@@ -37,7 +47,10 @@ import { StoreCustomizationService } from "../services";
 @UseGuards(CsrfGuard)
 @Controller("admin/stores/:storeId/customization")
 export class AdminStoreCustomizationController {
-  constructor(private readonly service: StoreCustomizationService) {}
+  constructor(
+    private readonly service: StoreCustomizationService,
+    private readonly assetService: StoreAssetService,
+  ) {}
 
   @Get("settings")
   @ApiOperation({ summary: "Read settings for an explicitly selected store" })
@@ -78,8 +91,11 @@ export class AdminStoreCustomizationController {
 
   @Post("theme/publish")
   @ApiOkResponse({ type: StoreThemeResponseDto })
-  publish(@Param("storeId", ParseUUIDPipe) storeId: string) {
-    return this.service.publish(storeId);
+  publish(
+    @Param("storeId", ParseUUIDPipe) storeId: string,
+    @Body() input: PublishThemeDto,
+  ) {
+    return this.service.publish(storeId, input);
   }
 
   @Get("theme/versions")
@@ -97,13 +113,27 @@ export class AdminStoreCustomizationController {
     return this.service.rollback(storeId, version);
   }
 
-  @Post("assets")
-  @ApiOkResponse({ type: StoreAssetResponseDto })
-  upsertAsset(
+  @Get("assets")
+  @ApiOkResponse({ type: StoreAssetListResponseDto })
+  listAssets(@Param("storeId", ParseUUIDPipe) storeId: string) {
+    return this.assetService.list(storeId);
+  }
+
+  @Post("assets/:category/upload")
+  @ApiConsumes("multipart/form-data")
+  @ApiParam({ name: "category", enum: STORE_ASSET_CATEGORIES })
+  @ApiBody({ type: UploadStoreAssetDto })
+  @ApiCreatedResponse({ type: StoreAssetResponseDto })
+  async uploadAsset(
     @Param("storeId", ParseUUIDPipe) storeId: string,
-    @Body() input: RegisterStoreAssetDto,
+    @Param("category") category: string,
+    @Req() request: FastifyRequest,
   ) {
-    return this.service.upsertAsset(storeId, input);
+    return this.assetService.upload(
+      storeId,
+      category,
+      await readStoreAssetUpload(request),
+    );
   }
 
   @Delete("assets/:assetId")
@@ -112,6 +142,7 @@ export class AdminStoreCustomizationController {
     @Param("storeId", ParseUUIDPipe) storeId: string,
     @Param("assetId", ParseUUIDPipe) assetId: string,
   ) {
-    return this.service.removeAsset(storeId, assetId);
+    return this.assetService.remove(storeId, assetId);
   }
+
 }

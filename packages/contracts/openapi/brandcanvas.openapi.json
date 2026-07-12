@@ -702,6 +702,16 @@
       "post": {
         "operationId": "SellerStoreCustomization_publish",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishThemeDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "",
@@ -786,21 +796,60 @@
       }
     },
     "/api/v1/seller/store-customization/assets": {
-      "post": {
-        "operationId": "SellerStoreCustomization_upsertAsset",
+      "get": {
+        "operationId": "SellerStoreCustomization_listAssets",
         "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreAssetListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Store Customization"
+        ]
+      }
+    },
+    "/api/v1/seller/store-customization/assets/{category}/upload": {
+      "post": {
+        "operationId": "SellerStoreCustomization_uploadAsset",
+        "parameters": [
+          {
+            "name": "category",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "logo",
+                "favicon"
+              ],
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/RegisterStoreAssetDto"
+                "$ref": "#/components/schemas/UploadStoreAssetDto"
               }
             }
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -816,7 +865,6 @@
             "brandcanvas_access": []
           }
         ],
-        "summary": "Register or update store asset metadata",
         "tags": [
           "Store Customization"
         ]
@@ -1062,6 +1110,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishThemeDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "",
@@ -1163,8 +1221,8 @@
       }
     },
     "/api/v1/admin/stores/{storeId}/customization/assets": {
-      "post": {
-        "operationId": "AdminStoreCustomization_upsertAsset",
+      "get": {
+        "operationId": "AdminStoreCustomization_listAssets",
         "parameters": [
           {
             "name": "storeId",
@@ -1175,18 +1233,65 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreAssetListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Store Customization"
+        ]
+      }
+    },
+    "/api/v1/admin/stores/{storeId}/customization/assets/{category}/upload": {
+      "post": {
+        "operationId": "AdminStoreCustomization_uploadAsset",
+        "parameters": [
+          {
+            "name": "storeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "logo",
+                "favicon"
+              ],
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/RegisterStoreAssetDto"
+                "$ref": "#/components/schemas/UploadStoreAssetDto"
               }
             }
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -1904,6 +2009,19 @@
             "type": "string",
             "nullable": true
           },
+          "businessAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "storePolicies": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultCurrency": {
+            "type": "string",
+            "example": "PKR",
+            "pattern": "^[A-Z]{3}$"
+          },
           "socialLinks": {
             "$ref": "#/components/schemas/StoreSocialLinksDto"
           },
@@ -1920,6 +2038,7 @@
           "id",
           "storeId",
           "displayName",
+          "defaultCurrency",
           "socialLinks",
           "createdAt",
           "updatedAt"
@@ -1947,6 +2066,21 @@
             "type": "string",
             "nullable": true,
             "maxLength": 32
+          },
+          "businessAddress": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 1000
+          },
+          "storePolicies": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 10000
+          },
+          "defaultCurrency": {
+            "type": "string",
+            "example": "PKR",
+            "pattern": "^[A-Z]{3}$"
           },
           "socialLinks": {
             "$ref": "#/components/schemas/StoreSocialLinksDto"
@@ -2023,6 +2157,13 @@
               "logo_centered"
             ]
           },
+          "style": {
+            "type": "string",
+            "enum": [
+              "solid",
+              "minimal"
+            ]
+          },
           "sticky": {
             "type": "boolean"
           },
@@ -2032,6 +2173,7 @@
         },
         "required": [
           "layout",
+          "style",
           "sticky",
           "showLogo"
         ]
@@ -2039,6 +2181,13 @@
       "ThemeFooterDto": {
         "type": "object",
         "properties": {
+          "style": {
+            "type": "string",
+            "enum": [
+              "simple",
+              "columns"
+            ]
+          },
           "showContact": {
             "type": "boolean"
           },
@@ -2049,6 +2198,7 @@
           }
         },
         "required": [
+          "style",
           "showContact"
         ]
       },
@@ -2066,6 +2216,26 @@
           },
           "footer": {
             "$ref": "#/components/schemas/ThemeFooterDto"
+          },
+          "buttonRadius": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 32,
+            "example": 8
+          },
+          "cardRadius": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 32,
+            "example": 12
+          },
+          "productCardStyle": {
+            "type": "string",
+            "enum": [
+              "minimal",
+              "bordered",
+              "elevated"
+            ]
           },
           "id": {
             "type": "string",
@@ -2109,6 +2279,9 @@
           "typography",
           "header",
           "footer",
+          "buttonRadius",
+          "cardRadius",
+          "productCardStyle",
           "id",
           "storeId",
           "lifecycle",
@@ -2131,13 +2304,55 @@
           },
           "footer": {
             "$ref": "#/components/schemas/ThemeFooterDto"
+          },
+          "buttonRadius": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 32,
+            "example": 8
+          },
+          "cardRadius": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 32,
+            "example": 12
+          },
+          "productCardStyle": {
+            "type": "string",
+            "enum": [
+              "minimal",
+              "bordered",
+              "elevated"
+            ]
+          },
+          "expectedRevision": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Revision loaded before editing."
           }
         },
         "required": [
           "colors",
           "typography",
           "header",
-          "footer"
+          "footer",
+          "buttonRadius",
+          "cardRadius",
+          "productCardStyle",
+          "expectedRevision"
+        ]
+      },
+      "PublishThemeDto": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Saved draft revision to publish."
+          }
+        },
+        "required": [
+          "expectedRevision"
         ]
       },
       "ThemeVersionListResponseDto": {
@@ -2154,64 +2369,6 @@
           "items"
         ]
       },
-      "RegisterStoreAssetDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Provide to update existing metadata owned by this store."
-          },
-          "category": {
-            "type": "string",
-            "example": "logo",
-            "description": "logo, favicon, banner, or a future snake-case category."
-          },
-          "storageProvider": {
-            "type": "string",
-            "example": "local"
-          },
-          "storageKey": {
-            "type": "string"
-          },
-          "publicUrl": {
-            "type": "string",
-            "format": "uri"
-          },
-          "originalFilename": {
-            "type": "string"
-          },
-          "mimeType": {
-            "type": "string",
-            "example": "image/png"
-          },
-          "sizeBytes": {
-            "type": "number",
-            "minimum": 1
-          },
-          "width": {
-            "type": "number",
-            "minimum": 1
-          },
-          "height": {
-            "type": "number",
-            "minimum": 1
-          },
-          "isCurrent": {
-            "type": "object",
-            "default": true
-          }
-        },
-        "required": [
-          "category",
-          "storageProvider",
-          "storageKey",
-          "publicUrl",
-          "originalFilename",
-          "mimeType",
-          "sizeBytes"
-        ]
-      },
       "StoreAssetResponseDto": {
         "type": "object",
         "properties": {
@@ -2224,7 +2381,11 @@
             "format": "uuid"
           },
           "category": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "logo",
+              "favicon"
+            ]
           },
           "storageProvider": {
             "type": "string"
@@ -2274,6 +2435,32 @@
           "isCurrent",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "StoreAssetListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoreAssetResponseDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "UploadStoreAssetDto": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary"
+          }
+        },
+        "required": [
+          "file"
         ]
       },
       "StoreCustomizationMessageDto": {

@@ -20,6 +20,9 @@ export type StoreSettingsFieldPath =
   | "description"
   | "contactEmail"
   | "contactPhone"
+  | "businessAddress"
+  | "storePolicies"
+  | "defaultCurrency"
   | "socialLinks.facebookUrl"
   | "socialLinks.instagramUrl"
   | "socialLinks.youtubeUrl"
@@ -32,6 +35,9 @@ export const STORE_SETTINGS_FIELD_PATHS: Record<StoreSettingsFieldPath, true> =
     description: true,
     contactEmail: true,
     contactPhone: true,
+    businessAddress: true,
+    storePolicies: true,
+    defaultCurrency: true,
     "socialLinks.facebookUrl": true,
     "socialLinks.instagramUrl": true,
     "socialLinks.youtubeUrl": true,

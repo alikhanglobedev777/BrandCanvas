@@ -9,30 +9,40 @@ import {
   Patch,
   Post,
   Put,
+  Req,
   UseGuards,
 } from "@nestjs/common";
 import {
+  ApiBody,
+  ApiConsumes,
   ApiCookieAuth,
+  ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiTags,
 } from "@nestjs/swagger";
+import type { FastifyRequest } from "fastify";
 import { CurrentUser } from "../../../common/decorators/current-user.decorator";
 import { Roles } from "../../../common/decorators/roles.decorator";
 import { CsrfGuard } from "../../../common/guards/csrf.guard";
 import type { AuthenticatedUser } from "../../../common/types/authenticated-user";
 import {
-  RegisterStoreAssetDto,
+  PublishThemeDto,
   SaveThemeDraftDto,
+  STORE_ASSET_CATEGORIES,
+  StoreAssetListResponseDto,
   StoreAssetResponseDto,
   StoreCustomizationMessageDto,
   StoreSettingsResponseDto,
   StoreThemeResponseDto,
   ThemeVersionListResponseDto,
+  UploadStoreAssetDto,
   UpdateStoreSettingsDto,
 } from "../dto";
 import { StoreCustomizationAccessGuard } from "../guards";
-import { StoreCustomizationService } from "../services";
+import { StoreAssetService, StoreCustomizationService } from "../services";
+import { readStoreAssetUpload } from "./read-store-asset-upload";
 
 @ApiTags("Store Customization")
 @ApiCookieAuth("brandcanvas_access")
@@ -40,7 +50,10 @@ import { StoreCustomizationService } from "../services";
 @UseGuards(StoreCustomizationAccessGuard, CsrfGuard)
 @Controller("seller/store-customization")
 export class SellerStoreCustomizationController {
-  constructor(private readonly service: StoreCustomizationService) {}
+  constructor(
+    private readonly service: StoreCustomizationService,
+    private readonly assetService: StoreAssetService,
+  ) {}
 
   @Get("settings")
   @ApiOperation({ summary: "Get settings for the authenticated seller store" })
@@ -87,8 +100,11 @@ export class SellerStoreCustomizationController {
 
   @Post("theme/publish")
   @ApiOkResponse({ type: StoreThemeResponseDto })
-  publish(@CurrentUser() user: AuthenticatedUser) {
-    return this.service.publish(user.storeId!);
+  publish(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() input: PublishThemeDto,
+  ) {
+    return this.service.publish(user.storeId!, input);
   }
 
   @Get("theme/versions")
@@ -106,14 +122,27 @@ export class SellerStoreCustomizationController {
     return this.service.rollback(user.storeId!, version);
   }
 
-  @Post("assets")
-  @ApiOperation({ summary: "Register or update store asset metadata" })
-  @ApiOkResponse({ type: StoreAssetResponseDto })
-  upsertAsset(
+  @Get("assets")
+  @ApiOkResponse({ type: StoreAssetListResponseDto })
+  listAssets(@CurrentUser() user: AuthenticatedUser) {
+    return this.assetService.list(user.storeId!);
+  }
+
+  @Post("assets/:category/upload")
+  @ApiConsumes("multipart/form-data")
+  @ApiParam({ name: "category", enum: STORE_ASSET_CATEGORIES })
+  @ApiBody({ type: UploadStoreAssetDto })
+  @ApiCreatedResponse({ type: StoreAssetResponseDto })
+  async uploadAsset(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() input: RegisterStoreAssetDto,
+    @Param("category") category: string,
+    @Req() request: FastifyRequest,
   ) {
-    return this.service.upsertAsset(user.storeId!, input);
+    return this.assetService.upload(
+      user.storeId!,
+      category,
+      await readStoreAssetUpload(request),
+    );
   }
 
   @Delete("assets/:assetId")
@@ -122,6 +151,7 @@ export class SellerStoreCustomizationController {
     @CurrentUser() user: AuthenticatedUser,
     @Param("assetId", ParseUUIDPipe) assetId: string,
   ) {
-    return this.service.removeAsset(user.storeId!, assetId);
+    return this.assetService.remove(user.storeId!, assetId);
   }
+
 }

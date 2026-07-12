@@ -1,86 +1,12 @@
-import { Type } from "class-transformer";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import {
-  IsBoolean,
-  IsInt,
-  IsMimeType,
-  IsOptional,
-  IsString,
-  IsUrl,
-  IsUUID,
-  Matches,
-  Max,
-  MaxLength,
-  Min,
-} from "class-validator";
 
-export class RegisterStoreAssetDto {
-  @ApiPropertyOptional({
-    format: "uuid",
-    description: "Provide to update existing metadata owned by this store.",
-  })
-  @IsOptional()
-  @IsUUID()
-  id?: string;
+export const STORE_ASSET_CATEGORIES = ["logo", "favicon"] as const;
+export type StoreAssetCategoryValue =
+  (typeof STORE_ASSET_CATEGORIES)[number];
 
-  @ApiProperty({
-    example: "logo",
-    description: "logo, favicon, banner, or a future snake-case category.",
-  })
-  @Matches(/^[a-z][a-z0-9_]{0,49}$/)
-  category!: string;
-
-  @ApiProperty({ example: "local" })
-  @IsString()
-  @MaxLength(32)
-  storageProvider!: string;
-
-  @ApiProperty()
-  @IsString()
-  @MaxLength(1000)
-  storageKey!: string;
-
-  @ApiProperty({ format: "uri" })
-  @IsUrl({ protocols: ["http", "https"], require_protocol: true })
-  publicUrl!: string;
-
-  @ApiProperty()
-  @IsString()
-  @MaxLength(255)
-  @Matches(/^[^<>]*$/, {
-    message: "originalFilename contains unsupported characters.",
-  })
-  originalFilename!: string;
-
-  @ApiProperty({ example: "image/png" })
-  @IsMimeType()
-  mimeType!: string;
-
-  @ApiProperty({ minimum: 1 })
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(10_000_000)
-  sizeBytes!: number;
-
-  @ApiPropertyOptional({ type: Number, minimum: 1 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  width?: number;
-
-  @ApiPropertyOptional({ type: Number, minimum: 1 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  height?: number;
-
-  @ApiPropertyOptional({ default: true })
-  @IsOptional()
-  @IsBoolean()
-  isCurrent = true;
+export class UploadStoreAssetDto {
+  @ApiProperty({ type: "string", format: "binary" })
+  file!: string;
 }
 
 export class StoreAssetResponseDto {
@@ -88,8 +14,8 @@ export class StoreAssetResponseDto {
   id!: string;
   @ApiProperty({ format: "uuid" })
   storeId!: string;
-  @ApiProperty()
-  category!: string;
+  @ApiProperty({ enum: STORE_ASSET_CATEGORIES })
+  category!: StoreAssetCategoryValue;
   @ApiProperty()
   storageProvider!: string;
   @ApiProperty({ format: "uri" })
@@ -110,6 +36,11 @@ export class StoreAssetResponseDto {
   createdAt!: string;
   @ApiProperty({ format: "date-time" })
   updatedAt!: string;
+}
+
+export class StoreAssetListResponseDto {
+  @ApiProperty({ type: [StoreAssetResponseDto] })
+  items!: StoreAssetResponseDto[];
 }
 
 export class StoreCustomizationMessageDto {

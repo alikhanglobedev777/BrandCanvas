@@ -111,8 +111,15 @@ export function StoreBrandingPage() {
         rollingBack={rollback.isPending}
         successMessage={successMessage}
         onSaveDraft={(data) => saveDraft.mutate({ data })}
-        onPublish={() => publish.mutate()}
+        onPublish={(expectedRevision) =>
+          publish.mutate({ data: { expectedRevision } })
+        }
         onRollback={(version) => rollback.mutate({ version })}
+        onReloadDraft={() => {
+          saveDraft.reset();
+          publish.reset();
+          void draft.refetch();
+        }}
       />
     );
   }

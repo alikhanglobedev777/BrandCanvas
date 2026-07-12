@@ -3,6 +3,7 @@
  * Do not edit manually.
  */
 import type { StoreThemeResponseDtoLifecycle } from "./storeThemeResponseDtoLifecycle";
+import type { StoreThemeResponseDtoProductCardStyle } from "./storeThemeResponseDtoProductCardStyle";
 import type { ThemeColorsDto } from "./themeColorsDto";
 import type { ThemeFooterDto } from "./themeFooterDto";
 import type { ThemeHeaderDto } from "./themeHeaderDto";
@@ -13,6 +14,17 @@ export interface StoreThemeResponseDto {
   typography: ThemeTypographyDto;
   header: ThemeHeaderDto;
   footer: ThemeFooterDto;
+  /**
+   * @minimum 0
+   * @maximum 32
+   */
+  buttonRadius: number;
+  /**
+   * @minimum 0
+   * @maximum 32
+   */
+  cardRadius: number;
+  productCardStyle: StoreThemeResponseDtoProductCardStyle;
   id: string;
   storeId: string;
   lifecycle: StoreThemeResponseDtoLifecycle;
