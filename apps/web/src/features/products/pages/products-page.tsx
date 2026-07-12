@@ -6,7 +6,12 @@ import {
   useCatalogCreate,
   useCatalogFindMany,
 } from "@brandcanvas/contracts";
-import { AppButton, LoadingState, PageHeader, SearchField } from "@brandcanvas/ui";
+import {
+  AppButton,
+  LoadingState,
+  PageHeader,
+  SearchField,
+} from "@brandcanvas/ui";
 import Alert from "@mui/material/Alert";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
@@ -42,7 +47,9 @@ export function ProductsPage() {
       onSuccess: async () => {
         setCreateOpen(false);
         setPage(1);
-        await queryClient.invalidateQueries({ queryKey: getCatalogFindManyQueryKey() });
+        await queryClient.invalidateQueries({
+          queryKey: getCatalogFindManyQueryKey(),
+        });
       },
     },
   });
@@ -53,7 +60,9 @@ export function ProductsPage() {
         eyebrow="Seller catalog"
         title="Products"
         description="Create products with generated API contracts and keep their default variant inventory connected automatically."
-        actions={<AppButton onClick={() => setCreateOpen(true)}>Add product</AppButton>}
+        actions={
+          <AppButton onClick={() => setCreateOpen(true)}>Add product</AppButton>
+        }
       />
       <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
         <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
@@ -77,7 +86,14 @@ export function ProductsPage() {
               }}
             >
               <MenuItem value="all">All statuses</MenuItem>
-              {(["draft", "active", "inactive", "archived"] satisfies CatalogFindManyStatus[]).map((value) => (
+              {(
+                [
+                  "draft",
+                  "active",
+                  "inactive",
+                  "archived",
+                ] satisfies CatalogFindManyStatus[]
+              ).map((value) => (
                 <MenuItem key={value} value={value}>
                   {value.charAt(0).toUpperCase() + value.slice(1)}
                 </MenuItem>
@@ -88,12 +104,20 @@ export function ProductsPage() {
       </Paper>
 
       {products.isPending ? <LoadingState label="Loading products…" /> : null}
-      {products.isError ? <Alert severity="error">{getApiErrorMessage(products.error, "Unable to load products.")}</Alert> : null}
+      {products.isError ? (
+        <Alert severity="error">
+          {getApiErrorMessage(products.error, "Unable to load products.")}
+        </Alert>
+      ) : null}
       {products.data ? (
         <Stack spacing={3}>
           <ProductTable products={products.data.items} />
           {products.data.totalPages > 1 ? (
-            <Pagination page={page} count={products.data.totalPages} onChange={(_, value) => setPage(value)} />
+            <Pagination
+              page={page}
+              count={products.data.totalPages}
+              onChange={(_, value) => setPage(value)}
+            />
           ) : null}
         </Stack>
       ) : null}
@@ -108,7 +132,11 @@ export function ProductsPage() {
         }}
         onSubmit={(data) => {
           const { compareAtPrice, ...requiredData } = data;
-          createProduct.mutate({ data: compareAtPrice ? { ...requiredData, compareAtPrice } : requiredData });
+          createProduct.mutate({
+            data: compareAtPrice
+              ? { ...requiredData, compareAtPrice }
+              : requiredData,
+          });
         }}
       />
     </SellerGuard>

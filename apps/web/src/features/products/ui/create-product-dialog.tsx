@@ -1,6 +1,9 @@
 "use client";
 
-import { CreateProductDtoStatus, type CreateProductDto } from "@brandcanvas/contracts";
+import {
+  CreateProductDtoStatus,
+  type CreateProductDto,
+} from "@brandcanvas/contracts";
 import { FormDialog } from "@brandcanvas/ui";
 import Alert from "@mui/material/Alert";
 import FormControl from "@mui/material/FormControl";
@@ -52,21 +55,49 @@ export function CreateProductDialog({
   }, [open, reset]);
 
   return (
-    <FormDialog open={open} title="Create product" formId={formId} submitLabel="Create product" loading={loading} onClose={onClose}>
-      <Stack component="form" id={formId} spacing={2.5} onSubmit={handleSubmit(onSubmit)} noValidate>
-        {error ? <Alert severity="error">{getApiErrorMessage(error, "Product creation failed.")}</Alert> : null}
+    <FormDialog
+      open={open}
+      title="Create product"
+      formId={formId}
+      submitLabel="Create product"
+      loading={loading}
+      onClose={onClose}
+    >
+      <Stack
+        component="form"
+        id={formId}
+        spacing={2.5}
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+      >
+        {error ? (
+          <Alert severity="error">
+            {getApiErrorMessage(error, "Product creation failed.")}
+          </Alert>
+        ) : null}
         <TextField
           label="Product name"
           error={Boolean(errors.name)}
           helperText={errors.name?.message}
-          {...register("name", { required: "Product name is required.", minLength: { value: 2, message: "Use at least 2 characters." } })}
+          {...register("name", {
+            required: "Product name is required.",
+            minLength: { value: 2, message: "Use at least 2 characters." },
+          })}
         />
-        <TextField label="Description" multiline minRows={3} {...register("description")} />
+        <TextField
+          label="Description"
+          multiline
+          minRows={3}
+          {...register("description")}
+        />
         <TextField
           label="SKU"
           error={Boolean(errors.sku)}
           helperText={errors.sku?.message}
-          {...register("sku", { required: "SKU is required.", minLength: { value: 2, message: "Use at least 2 characters." } })}
+          {...register("sku", {
+            required: "SKU is required.",
+            minLength: { value: 2, message: "Use at least 2 characters." },
+          })}
         />
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
           <TextField
@@ -75,7 +106,10 @@ export function CreateProductDialog({
             helperText={errors.price?.message}
             {...register("price", {
               required: "Price is required.",
-              pattern: { value: /^\d+(?:\.\d{1,2})?$/, message: "Use a valid amount with up to 2 decimals." },
+              pattern: {
+                value: /^\d+(?:\.\d{1,2})?$/,
+                message: "Use a valid amount with up to 2 decimals.",
+              },
             })}
           />
           <TextField
@@ -83,7 +117,10 @@ export function CreateProductDialog({
             error={Boolean(errors.compareAtPrice)}
             helperText={errors.compareAtPrice?.message}
             {...register("compareAtPrice", {
-              pattern: { value: /^$|^\d+(?:\.\d{1,2})?$/, message: "Use a valid amount with up to 2 decimals." },
+              pattern: {
+                value: /^$|^\d+(?:\.\d{1,2})?$/,
+                message: "Use a valid amount with up to 2 decimals.",
+              },
             })}
           />
         </Stack>
@@ -93,14 +130,20 @@ export function CreateProductDialog({
             type="number"
             error={Boolean(errors.initialStock)}
             helperText={errors.initialStock?.message}
-            {...register("initialStock", { valueAsNumber: true, min: { value: 0, message: "Stock cannot be negative." } })}
+            {...register("initialStock", {
+              valueAsNumber: true,
+              min: { value: 0, message: "Stock cannot be negative." },
+            })}
           />
           <TextField
             label="Low-stock threshold"
             type="number"
             error={Boolean(errors.lowStockThreshold)}
             helperText={errors.lowStockThreshold?.message}
-            {...register("lowStockThreshold", { valueAsNumber: true, min: { value: 0, message: "Threshold cannot be negative." } })}
+            {...register("lowStockThreshold", {
+              valueAsNumber: true,
+              min: { value: 0, message: "Threshold cannot be negative." },
+            })}
           />
         </Stack>
         <Controller

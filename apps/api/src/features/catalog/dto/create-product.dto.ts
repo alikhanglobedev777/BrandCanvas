@@ -1,5 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsIn, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from "class-validator";
+import {
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+} from "class-validator";
 import { PRODUCT_STATUSES, type ProductStatusValue } from "./catalog.constants";
 
 export class CreateProductDto {
@@ -25,7 +35,10 @@ export class CreateProductDto {
   @Matches(/^\d+(?:\.\d{1,2})?$/)
   price!: string;
 
-  @ApiPropertyOptional({ example: "3000.00", pattern: "^\\d+(?:\\.\\d{1,2})?$" })
+  @ApiPropertyOptional({
+    example: "3000.00",
+    pattern: "^\\d+(?:\\.\\d{1,2})?$",
+  })
   @IsOptional()
   @Matches(/^\d+(?:\.\d{1,2})?$/)
   compareAtPrice?: string;

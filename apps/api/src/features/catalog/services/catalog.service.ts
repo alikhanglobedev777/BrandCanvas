@@ -1,5 +1,16 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
-import { CreateProductDto, InventoryAdjustmentDto, ProductListResponseDto, ProductQueryDto, ProductResponseDto } from "../dto";
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import {
+  CreateProductDto,
+  InventoryAdjustmentDto,
+  ProductListResponseDto,
+  ProductQueryDto,
+  ProductResponseDto,
+} from "../dto";
 import { ProductMapper } from "../mappers";
 import { CatalogRepository } from "../repositories";
 
@@ -7,7 +18,10 @@ import { CatalogRepository } from "../repositories";
 export class CatalogService {
   constructor(private readonly catalogRepository: CatalogRepository) {}
 
-  async findMany(storeId: string, query: ProductQueryDto): Promise<ProductListResponseDto> {
+  async findMany(
+    storeId: string,
+    query: ProductQueryDto,
+  ): Promise<ProductListResponseDto> {
     const result = await this.catalogRepository.findMany({
       storeId,
       page: query.page,
@@ -26,25 +40,45 @@ export class CatalogService {
     };
   }
 
-  async create(storeId: string, userId: string, input: CreateProductDto): Promise<ProductResponseDto> {
+  async create(
+    storeId: string,
+    userId: string,
+    input: CreateProductDto,
+  ): Promise<ProductResponseDto> {
+    if (
+      input.compareAtPrice &&
+      Number(input.compareAtPrice) < Number(input.price)
+    ) {
+      throw new BadRequestException({
+        code: "PRODUCT_PRICE_RELATION_INVALID",
+        message: "Compare-at price must not be lower than the selling price.",
+      });
+    }
     try {
       const product = await this.catalogRepository.create({
         storeId,
         createdBy: userId,
         name: input.name.trim(),
         slug: this.toSlug(input.name),
-        ...(input.description?.trim() ? { description: input.description.trim() } : {}),
+        ...(input.description?.trim()
+          ? { description: input.description.trim() }
+          : {}),
         status: input.status,
         sku: input.sku.trim().toUpperCase(),
         price: input.price,
-        ...(input.compareAtPrice ? { compareAtPrice: input.compareAtPrice } : {}),
+        ...(input.compareAtPrice
+          ? { compareAtPrice: input.compareAtPrice }
+          : {}),
         initialStock: input.initialStock,
         lowStockThreshold: input.lowStockThreshold,
       });
       return ProductMapper.toResponse(product);
     } catch (error) {
       if (this.isUniqueViolation(error)) {
-        throw new ConflictException("The product slug or SKU is already used in this store.");
+        throw new ConflictException({
+          code: "PRODUCT_SLUG_OR_SKU_CONFLICT",
+          message: "The product slug or SKU is already used in this store.",
+        });
       }
       throw error;
     }
@@ -65,9 +99,12 @@ export class CatalogService {
       createdBy: userId,
     });
 
-    if (result.status === "not_found") throw new NotFoundException("Inventory item was not found.");
+    if (result.status === "not_found")
+      throw new NotFoundException("Inventory item was not found.");
     if (result.status === "insufficient_stock") {
-      throw new BadRequestException("This adjustment would make available inventory negative or below reserved stock.");
+      throw new BadRequestException(
+        "This adjustment would make available inventory negative or below reserved stock.",
+      );
     }
 
     return ProductMapper.toResponse(result.product);
@@ -84,6 +121,11 @@ export class CatalogService {
   }
 
   private isUniqueViolation(error: unknown): boolean {
-    return typeof error === "object" && error !== null && "code" in error && (error as { code?: unknown }).code === "23505";
+    return (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as { code?: unknown }).code === "23505"
+    );
   }
 }

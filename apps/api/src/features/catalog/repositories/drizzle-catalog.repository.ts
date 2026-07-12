@@ -1,5 +1,10 @@
 import { Injectable } from "@nestjs/common";
-import { inventoryItems, inventoryMovements, products, productVariants } from "@brandcanvas/database";
+import {
+  inventoryItems,
+  inventoryMovements,
+  products,
+  productVariants,
+} from "@brandcanvas/database";
 import { and, count, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { DatabaseService } from "../../../infrastructure/database";
 import { ProductMapper } from "../mappers";
@@ -59,11 +64,24 @@ export class DrizzleCatalogRepository implements CatalogRepository {
       eq(products.storeId, input.storeId),
       eq(productVariants.isDefault, true),
       input.status ? eq(products.status, input.status) : undefined,
-      search ? or(ilike(products.name, `%${search}%`), ilike(productVariants.sku, `%${search}%`)) : undefined,
-      input.stockStatus === "out_of_stock" ? sql`${availableSql} <= 0` : undefined,
-      input.stockStatus === "low_stock" ? sql`${availableSql} > 0 and ${availableSql} <= ${inventoryItems.lowStockThreshold}` : undefined,
-      input.stockStatus === "in_stock" ? sql`${availableSql} > ${inventoryItems.lowStockThreshold}` : undefined,
-    ].filter((condition): condition is NonNullable<typeof condition> => Boolean(condition));
+      search
+        ? or(
+            ilike(products.name, `%${search}%`),
+            ilike(productVariants.sku, `%${search}%`),
+          )
+        : undefined,
+      input.stockStatus === "out_of_stock"
+        ? sql`${availableSql} <= 0`
+        : undefined,
+      input.stockStatus === "low_stock"
+        ? sql`${availableSql} > 0 and ${availableSql} <= ${inventoryItems.lowStockThreshold}`
+        : undefined,
+      input.stockStatus === "in_stock"
+        ? sql`${availableSql} > ${inventoryItems.lowStockThreshold}`
+        : undefined,
+    ].filter((condition): condition is NonNullable<typeof condition> =>
+      Boolean(condition),
+    );
     const where = and(...conditions);
 
     const [rows, totals] = await Promise.all([
@@ -71,7 +89,10 @@ export class DrizzleCatalogRepository implements CatalogRepository {
         .select(selection)
         .from(products)
         .innerJoin(productVariants, eq(productVariants.productId, products.id))
-        .innerJoin(inventoryItems, eq(inventoryItems.variantId, productVariants.id))
+        .innerJoin(
+          inventoryItems,
+          eq(inventoryItems.variantId, productVariants.id),
+        )
         .where(where)
         .orderBy(desc(products.createdAt))
         .limit(input.pageSize)
@@ -80,11 +101,17 @@ export class DrizzleCatalogRepository implements CatalogRepository {
         .select({ total: count() })
         .from(products)
         .innerJoin(productVariants, eq(productVariants.productId, products.id))
-        .innerJoin(inventoryItems, eq(inventoryItems.variantId, productVariants.id))
+        .innerJoin(
+          inventoryItems,
+          eq(inventoryItems.variantId, productVariants.id),
+        )
         .where(where),
     ]);
 
-    return { items: rows.map((row) => this.toEntity(row)), total: Number(totals[0]?.total ?? 0) };
+    return {
+      items: rows.map((row) => this.toEntity(row)),
+      total: Number(totals[0]?.total ?? 0),
+    };
   }
 
   async create(input: CreateProductPersistenceInput): Promise<ProductEntity> {
@@ -97,6 +124,10 @@ export class DrizzleCatalogRepository implements CatalogRepository {
           slug: input.slug,
           description: input.description,
           status: input.status,
+          priceMinor: Math.round(Number(input.price) * 100),
+          compareAtPriceMinor: input.compareAtPrice
+            ? Math.round(Number(input.compareAtPrice) * 100)
+            : null,
         })
         .returning();
       if (!product) throw new Error("Failed to create product.");
@@ -110,6 +141,11 @@ export class DrizzleCatalogRepository implements CatalogRepository {
           sku: input.sku,
           price: input.price,
           compareAtPrice: input.compareAtPrice,
+          title: "Default",
+          priceOverrideMinor: Math.round(Number(input.price) * 100),
+          compareAtPriceMinor: input.compareAtPrice
+            ? Math.round(Number(input.compareAtPrice) * 100)
+            : null,
           isDefault: true,
         })
         .returning();
@@ -171,17 +207,27 @@ export class DrizzleCatalogRepository implements CatalogRepository {
       const [row] = await tx
         .select(selection)
         .from(inventoryItems)
-        .innerJoin(productVariants, eq(productVariants.id, inventoryItems.variantId))
+        .innerJoin(
+          productVariants,
+          eq(productVariants.id, inventoryItems.variantId),
+        )
         .innerJoin(products, eq(products.id, productVariants.productId))
-        .where(and(eq(inventoryItems.id, input.inventoryItemId), eq(inventoryItems.storeId, input.storeId)))
+        .where(
+          and(
+            eq(inventoryItems.id, input.inventoryItemId),
+            eq(inventoryItems.storeId, input.storeId),
+          ),
+        )
         .limit(1)
         .for("update");
 
       if (!row) return { status: "not_found" };
 
-      const delta = input.type === "manual_increase" ? input.quantity : -input.quantity;
+      const delta =
+        input.type === "manual_increase" ? input.quantity : -input.quantity;
       const nextQuantity = row.stockQuantity + delta;
-      if (nextQuantity < row.reservedQuantity || nextQuantity < 0) return { status: "insufficient_stock" };
+      if (nextQuantity < row.reservedQuantity || nextQuantity < 0)
+        return { status: "insufficient_stock" };
 
       await tx
         .update(inventoryItems)
@@ -201,7 +247,11 @@ export class DrizzleCatalogRepository implements CatalogRepository {
 
       return {
         status: "success",
-        product: this.toEntity({ ...row, stockQuantity: nextQuantity, updatedAt: new Date() }),
+        product: this.toEntity({
+          ...row,
+          stockQuantity: nextQuantity,
+          updatedAt: new Date(),
+        }),
       };
     });
   }
@@ -210,7 +260,10 @@ export class DrizzleCatalogRepository implements CatalogRepository {
     const available = Math.max(0, row.stockQuantity - row.reservedQuantity);
     return {
       ...row,
-      stockStatus: ProductMapper.getStockStatus(available, row.lowStockThreshold),
+      stockStatus: ProductMapper.getStockStatus(
+        available,
+        row.lowStockThreshold,
+      ),
     };
   }
 }

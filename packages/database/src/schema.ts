@@ -16,13 +16,26 @@ import {
 import { relations, sql } from "drizzle-orm";
 
 const timestamps = {
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 };
 
-export const platformRoleEnum = pgEnum("platform_role", ["super_admin", "user"]);
+export const platformRoleEnum = pgEnum("platform_role", [
+  "super_admin",
+  "user",
+]);
 export const userStatusEnum = pgEnum("user_status", ["active", "blocked"]);
-export const storeStatusEnum = pgEnum("store_status", ["pending", "active", "inactive", "suspended", "archived"]);
+export const storeStatusEnum = pgEnum("store_status", [
+  "pending",
+  "active",
+  "inactive",
+  "suspended",
+  "archived",
+]);
 export const storeMemberRoleEnum = pgEnum("store_member_role", [
   "owner",
   "admin",
@@ -31,7 +44,20 @@ export const storeMemberRoleEnum = pgEnum("store_member_role", [
   "order_manager",
   "support_agent",
 ]);
-export const productStatusEnum = pgEnum("product_status", ["draft", "active", "inactive", "archived"]);
+export const productStatusEnum = pgEnum("product_status", [
+  "draft",
+  "active",
+  "inactive",
+  "archived",
+]);
+export const categoryStatusEnum = pgEnum("category_status", [
+  "active",
+  "inactive",
+]);
+export const collectionStatusEnum = pgEnum("collection_status", [
+  "draft",
+  "published",
+]);
 export const orderStatusEnum = pgEnum("order_status", [
   "pending_payment",
   "pending_confirmation",
@@ -128,7 +154,9 @@ export const stores = pgTable(
       .notNull(),
     deactivationReason: text("deactivation_reason"),
     deactivatedAt: timestamp("deactivated_at", { withTimezone: true }),
-    deactivatedBy: uuid("deactivated_by").references(() => users.id, { onDelete: "set null" }),
+    deactivatedBy: uuid("deactivated_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
     ...timestamps,
   },
   (table) => [
@@ -154,7 +182,10 @@ export const storeMembers = pgTable(
     ...timestamps,
   },
   (table) => [
-    uniqueIndex("store_members_store_user_unique").on(table.storeId, table.userId),
+    uniqueIndex("store_members_store_user_unique").on(
+      table.storeId,
+      table.userId,
+    ),
     index("store_members_user_idx").on(table.userId),
   ],
 );
@@ -330,6 +361,62 @@ export const storeThemeConfigurations = pgTable(
   ],
 );
 
+export const productCategories = pgTable(
+  "product_categories",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 120 }).notNull(),
+    slug: varchar("slug", { length: 150 }).notNull(),
+    description: text("description"),
+    imageAssetId: uuid("image_asset_id").references(() => storeAssets.id, {
+      onDelete: "set null",
+    }),
+    sortOrder: integer("sort_order").default(0).notNull(),
+    status: categoryStatusEnum("status").default("active").notNull(),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("product_categories_store_slug_unique").on(
+      table.storeId,
+      table.slug,
+    ),
+    index("product_categories_store_status_idx").on(
+      table.storeId,
+      table.status,
+    ),
+    check(
+      "product_categories_sort_order_nonnegative",
+      sql`${table.sortOrder} >= 0`,
+    ),
+  ],
+);
+
+export const collections = pgTable(
+  "collections",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    title: varchar("title", { length: 150 }).notNull(),
+    slug: varchar("slug", { length: 150 }).notNull(),
+    description: text("description"),
+    status: collectionStatusEnum("status").default("draft").notNull(),
+    sortOrder: integer("sort_order").default(0).notNull(),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("collections_store_slug_unique").on(table.storeId, table.slug),
+    index("collections_store_status_idx").on(table.storeId, table.status),
+    check("collections_sort_order_nonnegative", sql`${table.sortOrder} >= 0`),
+  ],
+);
+
 export const products = pgTable(
   "products",
   {
@@ -340,12 +427,34 @@ export const products = pgTable(
     name: varchar("name", { length: 180 }).notNull(),
     slug: varchar("slug", { length: 180 }).notNull(),
     description: text("description"),
+    categoryId: uuid("category_id").references(() => productCategories.id, {
+      onDelete: "set null",
+    }),
+    priceMinor: integer("price_minor").default(0).notNull(),
+    compareAtPriceMinor: integer("compare_at_price_minor"),
+    costPriceMinor: integer("cost_price_minor"),
+    barcode: varchar("barcode", { length: 100 }),
+    keywords: text("keywords")
+      .array()
+      .default(sql`'{}'::text[]`)
+      .notNull(),
     status: productStatusEnum("status").default("draft").notNull(),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
     ...timestamps,
   },
   (table) => [
     uniqueIndex("products_store_slug_unique").on(table.storeId, table.slug),
     index("products_store_status_idx").on(table.storeId, table.status),
+    index("products_store_category_idx").on(table.storeId, table.categoryId),
+    check("products_price_minor_nonnegative", sql`${table.priceMinor} >= 0`),
+    check(
+      "products_compare_at_price_valid",
+      sql`${table.compareAtPriceMinor} is null or ${table.compareAtPriceMinor} >= ${table.priceMinor}`,
+    ),
+    check(
+      "products_cost_price_nonnegative",
+      sql`${table.costPriceMinor} is null or ${table.costPriceMinor} >= 0`,
+    ),
   ],
 );
 
@@ -360,16 +469,135 @@ export const productVariants = pgTable(
       .notNull()
       .references(() => products.id, { onDelete: "cascade" }),
     name: varchar("name", { length: 180 }).notNull(),
+    title: varchar("title", { length: 180 }).default("Default").notNull(),
     sku: varchar("sku", { length: 100 }).notNull(),
+    barcode: varchar("barcode", { length: 100 }),
     price: numeric("price", { precision: 12, scale: 2 }).notNull(),
     compareAtPrice: numeric("compare_at_price", { precision: 12, scale: 2 }),
+    priceOverrideMinor: integer("price_override_minor"),
+    compareAtPriceMinor: integer("compare_at_price_minor"),
+    costPriceMinor: integer("cost_price_minor"),
+    isActive: boolean("is_active").default(true).notNull(),
     isDefault: boolean("is_default").default(false).notNull(),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
     ...timestamps,
   },
   (table) => [
-    uniqueIndex("product_variants_store_sku_unique").on(table.storeId, table.sku),
+    uniqueIndex("product_variants_store_sku_unique").on(
+      table.storeId,
+      table.sku,
+    ),
     index("product_variants_product_idx").on(table.productId),
     check("product_variants_price_nonnegative", sql`${table.price} >= 0`),
+    check(
+      "product_variants_price_override_nonnegative",
+      sql`${table.priceOverrideMinor} is null or ${table.priceOverrideMinor} >= 0`,
+    ),
+    check(
+      "product_variants_compare_at_price_valid",
+      sql`${table.compareAtPriceMinor} is null or ${table.compareAtPriceMinor} >= coalesce(${table.priceOverrideMinor}, 0)`,
+    ),
+    check(
+      "product_variants_cost_price_nonnegative",
+      sql`${table.costPriceMinor} is null or ${table.costPriceMinor} >= 0`,
+    ),
+  ],
+);
+
+export const collectionProducts = pgTable(
+  "collection_products",
+  {
+    collectionId: uuid("collection_id")
+      .notNull()
+      .references(() => collections.id, { onDelete: "cascade" }),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    sortOrder: integer("sort_order").default(0).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("collection_products_unique").on(
+      table.collectionId,
+      table.productId,
+    ),
+    index("collection_products_product_idx").on(table.productId),
+    check(
+      "collection_products_sort_order_nonnegative",
+      sql`${table.sortOrder} >= 0`,
+    ),
+  ],
+);
+
+export const productOptions = pgTable(
+  "product_options",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 80 }).notNull(),
+    position: integer("position").default(0).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("product_options_product_name_unique").on(
+      table.productId,
+      table.name,
+    ),
+    uniqueIndex("product_options_product_position_unique").on(
+      table.productId,
+      table.position,
+    ),
+    check("product_options_position_nonnegative", sql`${table.position} >= 0`),
+  ],
+);
+
+export const productOptionValues = pgTable(
+  "product_option_values",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    optionId: uuid("option_id")
+      .notNull()
+      .references(() => productOptions.id, { onDelete: "cascade" }),
+    value: varchar("value", { length: 100 }).notNull(),
+    position: integer("position").default(0).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("product_option_values_option_value_unique").on(
+      table.optionId,
+      table.value,
+    ),
+    uniqueIndex("product_option_values_option_position_unique").on(
+      table.optionId,
+      table.position,
+    ),
+    check(
+      "product_option_values_position_nonnegative",
+      sql`${table.position} >= 0`,
+    ),
+  ],
+);
+
+export const productVariantValues = pgTable(
+  "product_variant_values",
+  {
+    variantId: uuid("variant_id")
+      .notNull()
+      .references(() => productVariants.id, { onDelete: "cascade" }),
+    optionValueId: uuid("option_value_id")
+      .notNull()
+      .references(() => productOptionValues.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    uniqueIndex("product_variant_values_unique").on(
+      table.variantId,
+      table.optionValueId,
+    ),
+    index("product_variant_values_option_value_idx").on(table.optionValueId),
   ],
 );
 
@@ -393,8 +621,14 @@ export const inventoryItems = pgTable(
     uniqueIndex("inventory_items_variant_unique").on(table.variantId),
     index("inventory_items_store_idx").on(table.storeId),
     check("inventory_stock_nonnegative", sql`${table.stockQuantity} >= 0`),
-    check("inventory_reserved_nonnegative", sql`${table.reservedQuantity} >= 0`),
-    check("inventory_reserved_not_above_stock", sql`${table.reservedQuantity} <= ${table.stockQuantity}`),
+    check(
+      "inventory_reserved_nonnegative",
+      sql`${table.reservedQuantity} >= 0`,
+    ),
+    check(
+      "inventory_reserved_not_above_stock",
+      sql`${table.reservedQuantity} <= ${table.stockQuantity}`,
+    ),
   ],
 );
 
@@ -415,10 +649,19 @@ export const inventoryMovements = pgTable(
     reason: text("reason"),
     referenceType: varchar("reference_type", { length: 50 }),
     referenceId: uuid("reference_id"),
-    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    createdBy: uuid("created_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
-  (table) => [index("inventory_movements_item_created_idx").on(table.inventoryItemId, table.createdAt)],
+  (table) => [
+    index("inventory_movements_item_created_idx").on(
+      table.inventoryItemId,
+      table.createdAt,
+    ),
+  ],
 );
 
 export const orders = pgTable(
@@ -433,13 +676,20 @@ export const orders = pgTable(
     status: orderStatusEnum("status").default("pending_payment").notNull(),
     currency: varchar("currency", { length: 3 }).default("PKR").notNull(),
     subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull(),
-    discountTotal: numeric("discount_total", { precision: 12, scale: 2 }).default("0").notNull(),
-    shippingTotal: numeric("shipping_total", { precision: 12, scale: 2 }).default("0").notNull(),
+    discountTotal: numeric("discount_total", { precision: 12, scale: 2 })
+      .default("0")
+      .notNull(),
+    shippingTotal: numeric("shipping_total", { precision: 12, scale: 2 })
+      .default("0")
+      .notNull(),
     grandTotal: numeric("grand_total", { precision: 12, scale: 2 }).notNull(),
     ...timestamps,
   },
   (table) => [
-    uniqueIndex("orders_store_number_unique").on(table.storeId, table.orderNumber),
+    uniqueIndex("orders_store_number_unique").on(
+      table.storeId,
+      table.orderNumber,
+    ),
     index("orders_store_status_idx").on(table.storeId, table.status),
     index("orders_customer_email_idx").on(table.customerEmail),
   ],
@@ -452,14 +702,18 @@ export const orderItems = pgTable(
     orderId: uuid("order_id")
       .notNull()
       .references(() => orders.id, { onDelete: "cascade" }),
-    variantId: uuid("variant_id").references(() => productVariants.id, { onDelete: "set null" }),
+    variantId: uuid("variant_id").references(() => productVariants.id, {
+      onDelete: "set null",
+    }),
     productName: varchar("product_name", { length: 180 }).notNull(),
     variantName: varchar("variant_name", { length: 180 }).notNull(),
     sku: varchar("sku", { length: 100 }).notNull(),
     unitPrice: numeric("unit_price", { precision: 12, scale: 2 }).notNull(),
     quantity: integer("quantity").notNull(),
     lineTotal: numeric("line_total", { precision: 12, scale: 2 }).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
   (table) => [
     index("order_items_order_idx").on(table.orderId),
@@ -474,13 +728,20 @@ export const sessions = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    storeId: uuid("store_id").references(() => stores.id, { onDelete: "cascade" }),
+    storeId: uuid("store_id").references(() => stores.id, {
+      onDelete: "cascade",
+    }),
     refreshTokenHash: text("refresh_token_hash").notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     revokedAt: timestamp("revoked_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
-  (table) => [index("sessions_user_idx").on(table.userId), index("sessions_store_idx").on(table.storeId)],
+  (table) => [
+    index("sessions_user_idx").on(table.userId),
+    index("sessions_store_idx").on(table.storeId),
+  ],
 );
 
 export const storesRelations = relations(stores, ({ many, one }) => ({
@@ -489,16 +750,127 @@ export const storesRelations = relations(stores, ({ many, one }) => ({
   settings: one(storeSettings),
   assets: many(storeAssets),
   themeConfigurations: many(storeThemeConfigurations),
+  categories: many(productCategories),
+  collections: many(collections),
+  products: many(products),
 }));
 
 export const storeSettingsRelations = relations(storeSettings, ({ one }) => ({
-  store: one(stores, { fields: [storeSettings.storeId], references: [stores.id] }),
+  store: one(stores, {
+    fields: [storeSettings.storeId],
+    references: [stores.id],
+  }),
 }));
 
 export const storeAssetsRelations = relations(storeAssets, ({ one }) => ({
-  store: one(stores, { fields: [storeAssets.storeId], references: [stores.id] }),
+  store: one(stores, {
+    fields: [storeAssets.storeId],
+    references: [stores.id],
+  }),
 }));
 
-export const storeThemeConfigurationsRelations = relations(storeThemeConfigurations, ({ one }) => ({
-  store: one(stores, { fields: [storeThemeConfigurations.storeId], references: [stores.id] }),
+export const storeThemeConfigurationsRelations = relations(
+  storeThemeConfigurations,
+  ({ one }) => ({
+    store: one(stores, {
+      fields: [storeThemeConfigurations.storeId],
+      references: [stores.id],
+    }),
+  }),
+);
+
+export const productCategoriesRelations = relations(
+  productCategories,
+  ({ many, one }) => ({
+    store: one(stores, {
+      fields: [productCategories.storeId],
+      references: [stores.id],
+    }),
+    imageAsset: one(storeAssets, {
+      fields: [productCategories.imageAssetId],
+      references: [storeAssets.id],
+    }),
+    products: many(products),
+  }),
+);
+
+export const collectionsRelations = relations(collections, ({ many, one }) => ({
+  store: one(stores, {
+    fields: [collections.storeId],
+    references: [stores.id],
+  }),
+  products: many(collectionProducts),
 }));
+
+export const productsRelations = relations(products, ({ many, one }) => ({
+  store: one(stores, { fields: [products.storeId], references: [stores.id] }),
+  category: one(productCategories, {
+    fields: [products.categoryId],
+    references: [productCategories.id],
+  }),
+  collections: many(collectionProducts),
+  options: many(productOptions),
+  variants: many(productVariants),
+}));
+
+export const collectionProductsRelations = relations(
+  collectionProducts,
+  ({ one }) => ({
+    collection: one(collections, {
+      fields: [collectionProducts.collectionId],
+      references: [collections.id],
+    }),
+    product: one(products, {
+      fields: [collectionProducts.productId],
+      references: [products.id],
+    }),
+  }),
+);
+
+export const productOptionsRelations = relations(
+  productOptions,
+  ({ many, one }) => ({
+    product: one(products, {
+      fields: [productOptions.productId],
+      references: [products.id],
+    }),
+    values: many(productOptionValues),
+  }),
+);
+
+export const productOptionValuesRelations = relations(
+  productOptionValues,
+  ({ many, one }) => ({
+    option: one(productOptions, {
+      fields: [productOptionValues.optionId],
+      references: [productOptions.id],
+    }),
+    variants: many(productVariantValues),
+  }),
+);
+
+export const productVariantsRelations = relations(
+  productVariants,
+  ({ many, one }) => ({
+    product: one(products, {
+      fields: [productVariants.productId],
+      references: [products.id],
+    }),
+    inventoryItem: one(inventoryItems),
+    values: many(productVariantValues),
+  }),
+);
+
+export const productVariantValuesRelations = relations(
+  productVariantValues,
+  ({ one }) => ({
+    variant: one(productVariants, {
+      fields: [productVariantValues.variantId],
+      references: [productVariants.id],
+    }),
+    optionValue: one(productOptionValues, {
+      fields: [productVariantValues.optionValueId],
+      references: [productOptionValues.id],
+    }),
+  }),
+);

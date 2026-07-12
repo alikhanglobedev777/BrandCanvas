@@ -20,10 +20,30 @@ import type {
 
 import type {
   CatalogFindManyParams,
+  CatalogManagementListCategoriesParams,
+  CatalogManagementListCollectionsParams,
+  CategoryListResponseDto,
+  CategoryResponseDto,
+  CollectionListResponseDto,
+  CollectionResponseDto,
+  CreateCategoryDto,
+  CreateCollectionDto,
   CreateProductDto,
+  CreateProductOptionDto,
+  CreateProductOptionValueDto,
+  CreateProductVariantDto,
   InventoryAdjustmentDto,
+  ProductDetailsResponseDto,
+  ProductIdsDto,
   ProductListResponseDto,
   ProductResponseDto,
+  ReorderCollectionProductsDto,
+  UpdateCategoryDto,
+  UpdateCollectionDto,
+  UpdateProductDto,
+  UpdateProductOptionDto,
+  UpdateProductOptionValueDto,
+  UpdateProductVariantDto,
 } from "../models";
 
 import { apiFetcher } from "../../client/api-fetcher";
@@ -405,6 +425,3096 @@ export const useCatalogAdjustInventory = <
 > => {
   return useMutation(
     getCatalogAdjustInventoryMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementListCategoriesUrl = (
+  params?: CatalogManagementListCategoriesParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/seller/catalog/categories?${stringifiedParams}`
+    : `/api/v1/seller/catalog/categories`;
+};
+
+export const catalogManagementListCategories = async (
+  params?: CatalogManagementListCategoriesParams,
+  options?: RequestInit,
+): Promise<CategoryListResponseDto> => {
+  return apiFetcher<CategoryListResponseDto>(
+    getCatalogManagementListCategoriesUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getCatalogManagementListCategoriesQueryKey = (
+  params?: CatalogManagementListCategoriesParams,
+) => {
+  return [
+    `/api/v1/seller/catalog/categories`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getCatalogManagementListCategoriesQueryOptions = <
+  TData = Awaited<ReturnType<typeof catalogManagementListCategories>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: CatalogManagementListCategoriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementListCategories>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getCatalogManagementListCategoriesQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof catalogManagementListCategories>>
+  > = ({ signal }) =>
+    catalogManagementListCategories(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof catalogManagementListCategories>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type CatalogManagementListCategoriesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementListCategories>>
+>;
+export type CatalogManagementListCategoriesQueryError = ErrorType<unknown>;
+
+export function useCatalogManagementListCategories<
+  TData = Awaited<ReturnType<typeof catalogManagementListCategories>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | CatalogManagementListCategoriesParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementListCategories>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogManagementListCategories>>,
+          TError,
+          Awaited<ReturnType<typeof catalogManagementListCategories>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCatalogManagementListCategories<
+  TData = Awaited<ReturnType<typeof catalogManagementListCategories>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: CatalogManagementListCategoriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementListCategories>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogManagementListCategories>>,
+          TError,
+          Awaited<ReturnType<typeof catalogManagementListCategories>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCatalogManagementListCategories<
+  TData = Awaited<ReturnType<typeof catalogManagementListCategories>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: CatalogManagementListCategoriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementListCategories>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useCatalogManagementListCategories<
+  TData = Awaited<ReturnType<typeof catalogManagementListCategories>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: CatalogManagementListCategoriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementListCategories>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getCatalogManagementListCategoriesQueryOptions(
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCatalogManagementCreateCategoryUrl = () => {
+  return `/api/v1/seller/catalog/categories`;
+};
+
+export const catalogManagementCreateCategory = async (
+  createCategoryDto: CreateCategoryDto,
+  options?: RequestInit,
+): Promise<CategoryResponseDto> => {
+  return apiFetcher<CategoryResponseDto>(
+    getCatalogManagementCreateCategoryUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createCategoryDto),
+    },
+  );
+};
+
+export const getCatalogManagementCreateCategoryMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementCreateCategory>>,
+    TError,
+    { data: BodyType<CreateCategoryDto> },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementCreateCategory>>,
+  TError,
+  { data: BodyType<CreateCategoryDto> },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementCreateCategory"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementCreateCategory>>,
+    { data: BodyType<CreateCategoryDto> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return catalogManagementCreateCategory(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementCreateCategoryMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementCreateCategory>>
+>;
+export type CatalogManagementCreateCategoryMutationBody =
+  BodyType<CreateCategoryDto>;
+export type CatalogManagementCreateCategoryMutationError = ErrorType<unknown>;
+
+export const useCatalogManagementCreateCategory = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementCreateCategory>>,
+      TError,
+      { data: BodyType<CreateCategoryDto> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementCreateCategory>>,
+  TError,
+  { data: BodyType<CreateCategoryDto> },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementCreateCategoryMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementGetCategoryUrl = (categoryId: string) => {
+  return `/api/v1/seller/catalog/categories/${categoryId}`;
+};
+
+export const catalogManagementGetCategory = async (
+  categoryId: string,
+  options?: RequestInit,
+): Promise<CategoryResponseDto> => {
+  return apiFetcher<CategoryResponseDto>(
+    getCatalogManagementGetCategoryUrl(categoryId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getCatalogManagementGetCategoryQueryKey = (categoryId: string) => {
+  return [`/api/v1/seller/catalog/categories/${categoryId}`] as const;
+};
+
+export const getCatalogManagementGetCategoryQueryOptions = <
+  TData = Awaited<ReturnType<typeof catalogManagementGetCategory>>,
+  TError = ErrorType<unknown>,
+>(
+  categoryId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementGetCategory>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getCatalogManagementGetCategoryQueryKey(categoryId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof catalogManagementGetCategory>>
+  > = ({ signal }) =>
+    catalogManagementGetCategory(categoryId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: categoryId !== null && categoryId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof catalogManagementGetCategory>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type CatalogManagementGetCategoryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementGetCategory>>
+>;
+export type CatalogManagementGetCategoryQueryError = ErrorType<unknown>;
+
+export function useCatalogManagementGetCategory<
+  TData = Awaited<ReturnType<typeof catalogManagementGetCategory>>,
+  TError = ErrorType<unknown>,
+>(
+  categoryId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementGetCategory>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogManagementGetCategory>>,
+          TError,
+          Awaited<ReturnType<typeof catalogManagementGetCategory>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCatalogManagementGetCategory<
+  TData = Awaited<ReturnType<typeof catalogManagementGetCategory>>,
+  TError = ErrorType<unknown>,
+>(
+  categoryId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementGetCategory>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogManagementGetCategory>>,
+          TError,
+          Awaited<ReturnType<typeof catalogManagementGetCategory>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCatalogManagementGetCategory<
+  TData = Awaited<ReturnType<typeof catalogManagementGetCategory>>,
+  TError = ErrorType<unknown>,
+>(
+  categoryId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementGetCategory>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useCatalogManagementGetCategory<
+  TData = Awaited<ReturnType<typeof catalogManagementGetCategory>>,
+  TError = ErrorType<unknown>,
+>(
+  categoryId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementGetCategory>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getCatalogManagementGetCategoryQueryOptions(
+    categoryId,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCatalogManagementUpdateCategoryUrl = (categoryId: string) => {
+  return `/api/v1/seller/catalog/categories/${categoryId}`;
+};
+
+export const catalogManagementUpdateCategory = async (
+  categoryId: string,
+  updateCategoryDto: UpdateCategoryDto,
+  options?: RequestInit,
+): Promise<CategoryResponseDto> => {
+  return apiFetcher<CategoryResponseDto>(
+    getCatalogManagementUpdateCategoryUrl(categoryId),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateCategoryDto),
+    },
+  );
+};
+
+export const getCatalogManagementUpdateCategoryMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementUpdateCategory>>,
+    TError,
+    { categoryId: string; data: BodyType<UpdateCategoryDto> },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementUpdateCategory>>,
+  TError,
+  { categoryId: string; data: BodyType<UpdateCategoryDto> },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementUpdateCategory"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementUpdateCategory>>,
+    { categoryId: string; data: BodyType<UpdateCategoryDto> }
+  > = (props) => {
+    const { categoryId, data } = props ?? {};
+
+    return catalogManagementUpdateCategory(categoryId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementUpdateCategoryMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementUpdateCategory>>
+>;
+export type CatalogManagementUpdateCategoryMutationBody =
+  BodyType<UpdateCategoryDto>;
+export type CatalogManagementUpdateCategoryMutationError = ErrorType<unknown>;
+
+export const useCatalogManagementUpdateCategory = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementUpdateCategory>>,
+      TError,
+      { categoryId: string; data: BodyType<UpdateCategoryDto> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementUpdateCategory>>,
+  TError,
+  { categoryId: string; data: BodyType<UpdateCategoryDto> },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementUpdateCategoryMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementArchiveCategoryUrl = (categoryId: string) => {
+  return `/api/v1/seller/catalog/categories/${categoryId}/archive`;
+};
+
+export const catalogManagementArchiveCategory = async (
+  categoryId: string,
+  options?: RequestInit,
+): Promise<CategoryResponseDto> => {
+  return apiFetcher<CategoryResponseDto>(
+    getCatalogManagementArchiveCategoryUrl(categoryId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getCatalogManagementArchiveCategoryMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementArchiveCategory>>,
+    TError,
+    { categoryId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementArchiveCategory>>,
+  TError,
+  { categoryId: string },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementArchiveCategory"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementArchiveCategory>>,
+    { categoryId: string }
+  > = (props) => {
+    const { categoryId } = props ?? {};
+
+    return catalogManagementArchiveCategory(categoryId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementArchiveCategoryMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementArchiveCategory>>
+>;
+
+export type CatalogManagementArchiveCategoryMutationError = ErrorType<unknown>;
+
+export const useCatalogManagementArchiveCategory = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementArchiveCategory>>,
+      TError,
+      { categoryId: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementArchiveCategory>>,
+  TError,
+  { categoryId: string },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementArchiveCategoryMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementRestoreCategoryUrl = (categoryId: string) => {
+  return `/api/v1/seller/catalog/categories/${categoryId}/restore`;
+};
+
+export const catalogManagementRestoreCategory = async (
+  categoryId: string,
+  options?: RequestInit,
+): Promise<CategoryResponseDto> => {
+  return apiFetcher<CategoryResponseDto>(
+    getCatalogManagementRestoreCategoryUrl(categoryId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getCatalogManagementRestoreCategoryMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementRestoreCategory>>,
+    TError,
+    { categoryId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementRestoreCategory>>,
+  TError,
+  { categoryId: string },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementRestoreCategory"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementRestoreCategory>>,
+    { categoryId: string }
+  > = (props) => {
+    const { categoryId } = props ?? {};
+
+    return catalogManagementRestoreCategory(categoryId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementRestoreCategoryMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementRestoreCategory>>
+>;
+
+export type CatalogManagementRestoreCategoryMutationError = ErrorType<unknown>;
+
+export const useCatalogManagementRestoreCategory = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementRestoreCategory>>,
+      TError,
+      { categoryId: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementRestoreCategory>>,
+  TError,
+  { categoryId: string },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementRestoreCategoryMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementListCollectionsUrl = (
+  params?: CatalogManagementListCollectionsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/seller/catalog/collections?${stringifiedParams}`
+    : `/api/v1/seller/catalog/collections`;
+};
+
+export const catalogManagementListCollections = async (
+  params?: CatalogManagementListCollectionsParams,
+  options?: RequestInit,
+): Promise<CollectionListResponseDto> => {
+  return apiFetcher<CollectionListResponseDto>(
+    getCatalogManagementListCollectionsUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getCatalogManagementListCollectionsQueryKey = (
+  params?: CatalogManagementListCollectionsParams,
+) => {
+  return [
+    `/api/v1/seller/catalog/collections`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getCatalogManagementListCollectionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof catalogManagementListCollections>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: CatalogManagementListCollectionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementListCollections>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getCatalogManagementListCollectionsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof catalogManagementListCollections>>
+  > = ({ signal }) =>
+    catalogManagementListCollections(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof catalogManagementListCollections>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type CatalogManagementListCollectionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementListCollections>>
+>;
+export type CatalogManagementListCollectionsQueryError = ErrorType<unknown>;
+
+export function useCatalogManagementListCollections<
+  TData = Awaited<ReturnType<typeof catalogManagementListCollections>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | CatalogManagementListCollectionsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementListCollections>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogManagementListCollections>>,
+          TError,
+          Awaited<ReturnType<typeof catalogManagementListCollections>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCatalogManagementListCollections<
+  TData = Awaited<ReturnType<typeof catalogManagementListCollections>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: CatalogManagementListCollectionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementListCollections>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogManagementListCollections>>,
+          TError,
+          Awaited<ReturnType<typeof catalogManagementListCollections>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCatalogManagementListCollections<
+  TData = Awaited<ReturnType<typeof catalogManagementListCollections>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: CatalogManagementListCollectionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementListCollections>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useCatalogManagementListCollections<
+  TData = Awaited<ReturnType<typeof catalogManagementListCollections>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: CatalogManagementListCollectionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementListCollections>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getCatalogManagementListCollectionsQueryOptions(
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCatalogManagementCreateCollectionUrl = () => {
+  return `/api/v1/seller/catalog/collections`;
+};
+
+export const catalogManagementCreateCollection = async (
+  createCollectionDto: CreateCollectionDto,
+  options?: RequestInit,
+): Promise<CollectionResponseDto> => {
+  return apiFetcher<CollectionResponseDto>(
+    getCatalogManagementCreateCollectionUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createCollectionDto),
+    },
+  );
+};
+
+export const getCatalogManagementCreateCollectionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementCreateCollection>>,
+    TError,
+    { data: BodyType<CreateCollectionDto> },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementCreateCollection>>,
+  TError,
+  { data: BodyType<CreateCollectionDto> },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementCreateCollection"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementCreateCollection>>,
+    { data: BodyType<CreateCollectionDto> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return catalogManagementCreateCollection(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementCreateCollectionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementCreateCollection>>
+>;
+export type CatalogManagementCreateCollectionMutationBody =
+  BodyType<CreateCollectionDto>;
+export type CatalogManagementCreateCollectionMutationError = ErrorType<unknown>;
+
+export const useCatalogManagementCreateCollection = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementCreateCollection>>,
+      TError,
+      { data: BodyType<CreateCollectionDto> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementCreateCollection>>,
+  TError,
+  { data: BodyType<CreateCollectionDto> },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementCreateCollectionMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementGetCollectionUrl = (collectionId: string) => {
+  return `/api/v1/seller/catalog/collections/${collectionId}`;
+};
+
+export const catalogManagementGetCollection = async (
+  collectionId: string,
+  options?: RequestInit,
+): Promise<CollectionResponseDto> => {
+  return apiFetcher<CollectionResponseDto>(
+    getCatalogManagementGetCollectionUrl(collectionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getCatalogManagementGetCollectionQueryKey = (
+  collectionId: string,
+) => {
+  return [`/api/v1/seller/catalog/collections/${collectionId}`] as const;
+};
+
+export const getCatalogManagementGetCollectionQueryOptions = <
+  TData = Awaited<ReturnType<typeof catalogManagementGetCollection>>,
+  TError = ErrorType<unknown>,
+>(
+  collectionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementGetCollection>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getCatalogManagementGetCollectionQueryKey(collectionId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof catalogManagementGetCollection>>
+  > = ({ signal }) =>
+    catalogManagementGetCollection(collectionId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: collectionId !== null && collectionId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof catalogManagementGetCollection>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type CatalogManagementGetCollectionQueryResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementGetCollection>>
+>;
+export type CatalogManagementGetCollectionQueryError = ErrorType<unknown>;
+
+export function useCatalogManagementGetCollection<
+  TData = Awaited<ReturnType<typeof catalogManagementGetCollection>>,
+  TError = ErrorType<unknown>,
+>(
+  collectionId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementGetCollection>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogManagementGetCollection>>,
+          TError,
+          Awaited<ReturnType<typeof catalogManagementGetCollection>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCatalogManagementGetCollection<
+  TData = Awaited<ReturnType<typeof catalogManagementGetCollection>>,
+  TError = ErrorType<unknown>,
+>(
+  collectionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementGetCollection>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogManagementGetCollection>>,
+          TError,
+          Awaited<ReturnType<typeof catalogManagementGetCollection>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCatalogManagementGetCollection<
+  TData = Awaited<ReturnType<typeof catalogManagementGetCollection>>,
+  TError = ErrorType<unknown>,
+>(
+  collectionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementGetCollection>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useCatalogManagementGetCollection<
+  TData = Awaited<ReturnType<typeof catalogManagementGetCollection>>,
+  TError = ErrorType<unknown>,
+>(
+  collectionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementGetCollection>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getCatalogManagementGetCollectionQueryOptions(
+    collectionId,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCatalogManagementUpdateCollectionUrl = (
+  collectionId: string,
+) => {
+  return `/api/v1/seller/catalog/collections/${collectionId}`;
+};
+
+export const catalogManagementUpdateCollection = async (
+  collectionId: string,
+  updateCollectionDto: UpdateCollectionDto,
+  options?: RequestInit,
+): Promise<CollectionResponseDto> => {
+  return apiFetcher<CollectionResponseDto>(
+    getCatalogManagementUpdateCollectionUrl(collectionId),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateCollectionDto),
+    },
+  );
+};
+
+export const getCatalogManagementUpdateCollectionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementUpdateCollection>>,
+    TError,
+    { collectionId: string; data: BodyType<UpdateCollectionDto> },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementUpdateCollection>>,
+  TError,
+  { collectionId: string; data: BodyType<UpdateCollectionDto> },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementUpdateCollection"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementUpdateCollection>>,
+    { collectionId: string; data: BodyType<UpdateCollectionDto> }
+  > = (props) => {
+    const { collectionId, data } = props ?? {};
+
+    return catalogManagementUpdateCollection(
+      collectionId,
+      data,
+      requestOptions,
+    );
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementUpdateCollectionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementUpdateCollection>>
+>;
+export type CatalogManagementUpdateCollectionMutationBody =
+  BodyType<UpdateCollectionDto>;
+export type CatalogManagementUpdateCollectionMutationError = ErrorType<unknown>;
+
+export const useCatalogManagementUpdateCollection = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementUpdateCollection>>,
+      TError,
+      { collectionId: string; data: BodyType<UpdateCollectionDto> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementUpdateCollection>>,
+  TError,
+  { collectionId: string; data: BodyType<UpdateCollectionDto> },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementUpdateCollectionMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementArchiveCollectionUrl = (
+  collectionId: string,
+) => {
+  return `/api/v1/seller/catalog/collections/${collectionId}/archive`;
+};
+
+export const catalogManagementArchiveCollection = async (
+  collectionId: string,
+  options?: RequestInit,
+): Promise<CollectionResponseDto> => {
+  return apiFetcher<CollectionResponseDto>(
+    getCatalogManagementArchiveCollectionUrl(collectionId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getCatalogManagementArchiveCollectionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementArchiveCollection>>,
+    TError,
+    { collectionId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementArchiveCollection>>,
+  TError,
+  { collectionId: string },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementArchiveCollection"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementArchiveCollection>>,
+    { collectionId: string }
+  > = (props) => {
+    const { collectionId } = props ?? {};
+
+    return catalogManagementArchiveCollection(collectionId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementArchiveCollectionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementArchiveCollection>>
+>;
+
+export type CatalogManagementArchiveCollectionMutationError =
+  ErrorType<unknown>;
+
+export const useCatalogManagementArchiveCollection = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementArchiveCollection>>,
+      TError,
+      { collectionId: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementArchiveCollection>>,
+  TError,
+  { collectionId: string },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementArchiveCollectionMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementRestoreCollectionUrl = (
+  collectionId: string,
+) => {
+  return `/api/v1/seller/catalog/collections/${collectionId}/restore`;
+};
+
+export const catalogManagementRestoreCollection = async (
+  collectionId: string,
+  options?: RequestInit,
+): Promise<CollectionResponseDto> => {
+  return apiFetcher<CollectionResponseDto>(
+    getCatalogManagementRestoreCollectionUrl(collectionId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getCatalogManagementRestoreCollectionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementRestoreCollection>>,
+    TError,
+    { collectionId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementRestoreCollection>>,
+  TError,
+  { collectionId: string },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementRestoreCollection"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementRestoreCollection>>,
+    { collectionId: string }
+  > = (props) => {
+    const { collectionId } = props ?? {};
+
+    return catalogManagementRestoreCollection(collectionId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementRestoreCollectionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementRestoreCollection>>
+>;
+
+export type CatalogManagementRestoreCollectionMutationError =
+  ErrorType<unknown>;
+
+export const useCatalogManagementRestoreCollection = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementRestoreCollection>>,
+      TError,
+      { collectionId: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementRestoreCollection>>,
+  TError,
+  { collectionId: string },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementRestoreCollectionMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementAddCollectionProductsUrl = (
+  collectionId: string,
+) => {
+  return `/api/v1/seller/catalog/collections/${collectionId}/products`;
+};
+
+export const catalogManagementAddCollectionProducts = async (
+  collectionId: string,
+  productIdsDto: ProductIdsDto,
+  options?: RequestInit,
+): Promise<CollectionResponseDto> => {
+  return apiFetcher<CollectionResponseDto>(
+    getCatalogManagementAddCollectionProductsUrl(collectionId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(productIdsDto),
+    },
+  );
+};
+
+export const getCatalogManagementAddCollectionProductsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementAddCollectionProducts>>,
+    TError,
+    { collectionId: string; data: BodyType<ProductIdsDto> },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementAddCollectionProducts>>,
+  TError,
+  { collectionId: string; data: BodyType<ProductIdsDto> },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementAddCollectionProducts"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementAddCollectionProducts>>,
+    { collectionId: string; data: BodyType<ProductIdsDto> }
+  > = (props) => {
+    const { collectionId, data } = props ?? {};
+
+    return catalogManagementAddCollectionProducts(
+      collectionId,
+      data,
+      requestOptions,
+    );
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementAddCollectionProductsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementAddCollectionProducts>>
+>;
+export type CatalogManagementAddCollectionProductsMutationBody =
+  BodyType<ProductIdsDto>;
+export type CatalogManagementAddCollectionProductsMutationError =
+  ErrorType<unknown>;
+
+export const useCatalogManagementAddCollectionProducts = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementAddCollectionProducts>>,
+      TError,
+      { collectionId: string; data: BodyType<ProductIdsDto> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementAddCollectionProducts>>,
+  TError,
+  { collectionId: string; data: BodyType<ProductIdsDto> },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementAddCollectionProductsMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementRemoveCollectionProductsUrl = (
+  collectionId: string,
+) => {
+  return `/api/v1/seller/catalog/collections/${collectionId}/products`;
+};
+
+export const catalogManagementRemoveCollectionProducts = async (
+  collectionId: string,
+  productIdsDto: ProductIdsDto,
+  options?: RequestInit,
+): Promise<CollectionResponseDto> => {
+  return apiFetcher<CollectionResponseDto>(
+    getCatalogManagementRemoveCollectionProductsUrl(collectionId),
+    {
+      ...options,
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(productIdsDto),
+    },
+  );
+};
+
+export const getCatalogManagementRemoveCollectionProductsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementRemoveCollectionProducts>>,
+    TError,
+    { collectionId: string; data: BodyType<ProductIdsDto> },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementRemoveCollectionProducts>>,
+  TError,
+  { collectionId: string; data: BodyType<ProductIdsDto> },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementRemoveCollectionProducts"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementRemoveCollectionProducts>>,
+    { collectionId: string; data: BodyType<ProductIdsDto> }
+  > = (props) => {
+    const { collectionId, data } = props ?? {};
+
+    return catalogManagementRemoveCollectionProducts(
+      collectionId,
+      data,
+      requestOptions,
+    );
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementRemoveCollectionProductsMutationResult =
+  NonNullable<
+    Awaited<ReturnType<typeof catalogManagementRemoveCollectionProducts>>
+  >;
+export type CatalogManagementRemoveCollectionProductsMutationBody =
+  BodyType<ProductIdsDto>;
+export type CatalogManagementRemoveCollectionProductsMutationError =
+  ErrorType<unknown>;
+
+export const useCatalogManagementRemoveCollectionProducts = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementRemoveCollectionProducts>>,
+      TError,
+      { collectionId: string; data: BodyType<ProductIdsDto> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementRemoveCollectionProducts>>,
+  TError,
+  { collectionId: string; data: BodyType<ProductIdsDto> },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementRemoveCollectionProductsMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementReorderCollectionProductsUrl = (
+  collectionId: string,
+) => {
+  return `/api/v1/seller/catalog/collections/${collectionId}/products/order`;
+};
+
+export const catalogManagementReorderCollectionProducts = async (
+  collectionId: string,
+  reorderCollectionProductsDto: ReorderCollectionProductsDto,
+  options?: RequestInit,
+): Promise<CollectionResponseDto> => {
+  return apiFetcher<CollectionResponseDto>(
+    getCatalogManagementReorderCollectionProductsUrl(collectionId),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(reorderCollectionProductsDto),
+    },
+  );
+};
+
+export const getCatalogManagementReorderCollectionProductsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementReorderCollectionProducts>>,
+    TError,
+    { collectionId: string; data: BodyType<ReorderCollectionProductsDto> },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementReorderCollectionProducts>>,
+  TError,
+  { collectionId: string; data: BodyType<ReorderCollectionProductsDto> },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementReorderCollectionProducts"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementReorderCollectionProducts>>,
+    { collectionId: string; data: BodyType<ReorderCollectionProductsDto> }
+  > = (props) => {
+    const { collectionId, data } = props ?? {};
+
+    return catalogManagementReorderCollectionProducts(
+      collectionId,
+      data,
+      requestOptions,
+    );
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementReorderCollectionProductsMutationResult =
+  NonNullable<
+    Awaited<ReturnType<typeof catalogManagementReorderCollectionProducts>>
+  >;
+export type CatalogManagementReorderCollectionProductsMutationBody =
+  BodyType<ReorderCollectionProductsDto>;
+export type CatalogManagementReorderCollectionProductsMutationError =
+  ErrorType<unknown>;
+
+export const useCatalogManagementReorderCollectionProducts = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementReorderCollectionProducts>>,
+      TError,
+      { collectionId: string; data: BodyType<ReorderCollectionProductsDto> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementReorderCollectionProducts>>,
+  TError,
+  { collectionId: string; data: BodyType<ReorderCollectionProductsDto> },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementReorderCollectionProductsMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementGetProductUrl = (productId: string) => {
+  return `/api/v1/seller/catalog/products/${productId}`;
+};
+
+export const catalogManagementGetProduct = async (
+  productId: string,
+  options?: RequestInit,
+): Promise<ProductDetailsResponseDto> => {
+  return apiFetcher<ProductDetailsResponseDto>(
+    getCatalogManagementGetProductUrl(productId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getCatalogManagementGetProductQueryKey = (productId: string) => {
+  return [`/api/v1/seller/catalog/products/${productId}`] as const;
+};
+
+export const getCatalogManagementGetProductQueryOptions = <
+  TData = Awaited<ReturnType<typeof catalogManagementGetProduct>>,
+  TError = ErrorType<unknown>,
+>(
+  productId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementGetProduct>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getCatalogManagementGetProductQueryKey(productId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof catalogManagementGetProduct>>
+  > = ({ signal }) =>
+    catalogManagementGetProduct(productId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: productId !== null && productId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof catalogManagementGetProduct>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type CatalogManagementGetProductQueryResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementGetProduct>>
+>;
+export type CatalogManagementGetProductQueryError = ErrorType<unknown>;
+
+export function useCatalogManagementGetProduct<
+  TData = Awaited<ReturnType<typeof catalogManagementGetProduct>>,
+  TError = ErrorType<unknown>,
+>(
+  productId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementGetProduct>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogManagementGetProduct>>,
+          TError,
+          Awaited<ReturnType<typeof catalogManagementGetProduct>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCatalogManagementGetProduct<
+  TData = Awaited<ReturnType<typeof catalogManagementGetProduct>>,
+  TError = ErrorType<unknown>,
+>(
+  productId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementGetProduct>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogManagementGetProduct>>,
+          TError,
+          Awaited<ReturnType<typeof catalogManagementGetProduct>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCatalogManagementGetProduct<
+  TData = Awaited<ReturnType<typeof catalogManagementGetProduct>>,
+  TError = ErrorType<unknown>,
+>(
+  productId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementGetProduct>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useCatalogManagementGetProduct<
+  TData = Awaited<ReturnType<typeof catalogManagementGetProduct>>,
+  TError = ErrorType<unknown>,
+>(
+  productId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof catalogManagementGetProduct>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getCatalogManagementGetProductQueryOptions(
+    productId,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCatalogManagementUpdateProductUrl = (productId: string) => {
+  return `/api/v1/seller/catalog/products/${productId}`;
+};
+
+export const catalogManagementUpdateProduct = async (
+  productId: string,
+  updateProductDto: UpdateProductDto,
+  options?: RequestInit,
+): Promise<ProductDetailsResponseDto> => {
+  return apiFetcher<ProductDetailsResponseDto>(
+    getCatalogManagementUpdateProductUrl(productId),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateProductDto),
+    },
+  );
+};
+
+export const getCatalogManagementUpdateProductMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementUpdateProduct>>,
+    TError,
+    { productId: string; data: BodyType<UpdateProductDto> },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementUpdateProduct>>,
+  TError,
+  { productId: string; data: BodyType<UpdateProductDto> },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementUpdateProduct"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementUpdateProduct>>,
+    { productId: string; data: BodyType<UpdateProductDto> }
+  > = (props) => {
+    const { productId, data } = props ?? {};
+
+    return catalogManagementUpdateProduct(productId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementUpdateProductMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementUpdateProduct>>
+>;
+export type CatalogManagementUpdateProductMutationBody =
+  BodyType<UpdateProductDto>;
+export type CatalogManagementUpdateProductMutationError = ErrorType<unknown>;
+
+export const useCatalogManagementUpdateProduct = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementUpdateProduct>>,
+      TError,
+      { productId: string; data: BodyType<UpdateProductDto> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementUpdateProduct>>,
+  TError,
+  { productId: string; data: BodyType<UpdateProductDto> },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementUpdateProductMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementArchiveProductUrl = (productId: string) => {
+  return `/api/v1/seller/catalog/products/${productId}/archive`;
+};
+
+export const catalogManagementArchiveProduct = async (
+  productId: string,
+  options?: RequestInit,
+): Promise<ProductDetailsResponseDto> => {
+  return apiFetcher<ProductDetailsResponseDto>(
+    getCatalogManagementArchiveProductUrl(productId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getCatalogManagementArchiveProductMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementArchiveProduct>>,
+    TError,
+    { productId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementArchiveProduct>>,
+  TError,
+  { productId: string },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementArchiveProduct"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementArchiveProduct>>,
+    { productId: string }
+  > = (props) => {
+    const { productId } = props ?? {};
+
+    return catalogManagementArchiveProduct(productId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementArchiveProductMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementArchiveProduct>>
+>;
+
+export type CatalogManagementArchiveProductMutationError = ErrorType<unknown>;
+
+export const useCatalogManagementArchiveProduct = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementArchiveProduct>>,
+      TError,
+      { productId: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementArchiveProduct>>,
+  TError,
+  { productId: string },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementArchiveProductMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementRestoreProductUrl = (productId: string) => {
+  return `/api/v1/seller/catalog/products/${productId}/restore`;
+};
+
+export const catalogManagementRestoreProduct = async (
+  productId: string,
+  options?: RequestInit,
+): Promise<ProductDetailsResponseDto> => {
+  return apiFetcher<ProductDetailsResponseDto>(
+    getCatalogManagementRestoreProductUrl(productId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getCatalogManagementRestoreProductMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementRestoreProduct>>,
+    TError,
+    { productId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementRestoreProduct>>,
+  TError,
+  { productId: string },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementRestoreProduct"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementRestoreProduct>>,
+    { productId: string }
+  > = (props) => {
+    const { productId } = props ?? {};
+
+    return catalogManagementRestoreProduct(productId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementRestoreProductMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementRestoreProduct>>
+>;
+
+export type CatalogManagementRestoreProductMutationError = ErrorType<unknown>;
+
+export const useCatalogManagementRestoreProduct = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementRestoreProduct>>,
+      TError,
+      { productId: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementRestoreProduct>>,
+  TError,
+  { productId: string },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementRestoreProductMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementCreateOptionUrl = (productId: string) => {
+  return `/api/v1/seller/catalog/products/${productId}/options`;
+};
+
+export const catalogManagementCreateOption = async (
+  productId: string,
+  createProductOptionDto: CreateProductOptionDto,
+  options?: RequestInit,
+): Promise<ProductDetailsResponseDto> => {
+  return apiFetcher<ProductDetailsResponseDto>(
+    getCatalogManagementCreateOptionUrl(productId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createProductOptionDto),
+    },
+  );
+};
+
+export const getCatalogManagementCreateOptionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementCreateOption>>,
+    TError,
+    { productId: string; data: BodyType<CreateProductOptionDto> },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementCreateOption>>,
+  TError,
+  { productId: string; data: BodyType<CreateProductOptionDto> },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementCreateOption"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementCreateOption>>,
+    { productId: string; data: BodyType<CreateProductOptionDto> }
+  > = (props) => {
+    const { productId, data } = props ?? {};
+
+    return catalogManagementCreateOption(productId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementCreateOptionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementCreateOption>>
+>;
+export type CatalogManagementCreateOptionMutationBody =
+  BodyType<CreateProductOptionDto>;
+export type CatalogManagementCreateOptionMutationError = ErrorType<unknown>;
+
+export const useCatalogManagementCreateOption = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementCreateOption>>,
+      TError,
+      { productId: string; data: BodyType<CreateProductOptionDto> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementCreateOption>>,
+  TError,
+  { productId: string; data: BodyType<CreateProductOptionDto> },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementCreateOptionMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementUpdateOptionUrl = (
+  productId: string,
+  optionId: string,
+) => {
+  return `/api/v1/seller/catalog/products/${productId}/options/${optionId}`;
+};
+
+export const catalogManagementUpdateOption = async (
+  productId: string,
+  optionId: string,
+  updateProductOptionDto: UpdateProductOptionDto,
+  options?: RequestInit,
+): Promise<ProductDetailsResponseDto> => {
+  return apiFetcher<ProductDetailsResponseDto>(
+    getCatalogManagementUpdateOptionUrl(productId, optionId),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateProductOptionDto),
+    },
+  );
+};
+
+export const getCatalogManagementUpdateOptionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementUpdateOption>>,
+    TError,
+    {
+      productId: string;
+      optionId: string;
+      data: BodyType<UpdateProductOptionDto>;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementUpdateOption>>,
+  TError,
+  {
+    productId: string;
+    optionId: string;
+    data: BodyType<UpdateProductOptionDto>;
+  },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementUpdateOption"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementUpdateOption>>,
+    {
+      productId: string;
+      optionId: string;
+      data: BodyType<UpdateProductOptionDto>;
+    }
+  > = (props) => {
+    const { productId, optionId, data } = props ?? {};
+
+    return catalogManagementUpdateOption(
+      productId,
+      optionId,
+      data,
+      requestOptions,
+    );
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementUpdateOptionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementUpdateOption>>
+>;
+export type CatalogManagementUpdateOptionMutationBody =
+  BodyType<UpdateProductOptionDto>;
+export type CatalogManagementUpdateOptionMutationError = ErrorType<unknown>;
+
+export const useCatalogManagementUpdateOption = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementUpdateOption>>,
+      TError,
+      {
+        productId: string;
+        optionId: string;
+        data: BodyType<UpdateProductOptionDto>;
+      },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementUpdateOption>>,
+  TError,
+  {
+    productId: string;
+    optionId: string;
+    data: BodyType<UpdateProductOptionDto>;
+  },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementUpdateOptionMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementDeleteOptionUrl = (
+  productId: string,
+  optionId: string,
+) => {
+  return `/api/v1/seller/catalog/products/${productId}/options/${optionId}`;
+};
+
+export const catalogManagementDeleteOption = async (
+  productId: string,
+  optionId: string,
+  options?: RequestInit,
+): Promise<ProductDetailsResponseDto> => {
+  return apiFetcher<ProductDetailsResponseDto>(
+    getCatalogManagementDeleteOptionUrl(productId, optionId),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getCatalogManagementDeleteOptionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementDeleteOption>>,
+    TError,
+    { productId: string; optionId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementDeleteOption>>,
+  TError,
+  { productId: string; optionId: string },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementDeleteOption"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementDeleteOption>>,
+    { productId: string; optionId: string }
+  > = (props) => {
+    const { productId, optionId } = props ?? {};
+
+    return catalogManagementDeleteOption(productId, optionId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementDeleteOptionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementDeleteOption>>
+>;
+
+export type CatalogManagementDeleteOptionMutationError = ErrorType<unknown>;
+
+export const useCatalogManagementDeleteOption = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementDeleteOption>>,
+      TError,
+      { productId: string; optionId: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementDeleteOption>>,
+  TError,
+  { productId: string; optionId: string },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementDeleteOptionMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementCreateOptionValueUrl = (
+  productId: string,
+  optionId: string,
+) => {
+  return `/api/v1/seller/catalog/products/${productId}/options/${optionId}/values`;
+};
+
+export const catalogManagementCreateOptionValue = async (
+  productId: string,
+  optionId: string,
+  createProductOptionValueDto: CreateProductOptionValueDto,
+  options?: RequestInit,
+): Promise<ProductDetailsResponseDto> => {
+  return apiFetcher<ProductDetailsResponseDto>(
+    getCatalogManagementCreateOptionValueUrl(productId, optionId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createProductOptionValueDto),
+    },
+  );
+};
+
+export const getCatalogManagementCreateOptionValueMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementCreateOptionValue>>,
+    TError,
+    {
+      productId: string;
+      optionId: string;
+      data: BodyType<CreateProductOptionValueDto>;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementCreateOptionValue>>,
+  TError,
+  {
+    productId: string;
+    optionId: string;
+    data: BodyType<CreateProductOptionValueDto>;
+  },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementCreateOptionValue"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementCreateOptionValue>>,
+    {
+      productId: string;
+      optionId: string;
+      data: BodyType<CreateProductOptionValueDto>;
+    }
+  > = (props) => {
+    const { productId, optionId, data } = props ?? {};
+
+    return catalogManagementCreateOptionValue(
+      productId,
+      optionId,
+      data,
+      requestOptions,
+    );
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementCreateOptionValueMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementCreateOptionValue>>
+>;
+export type CatalogManagementCreateOptionValueMutationBody =
+  BodyType<CreateProductOptionValueDto>;
+export type CatalogManagementCreateOptionValueMutationError =
+  ErrorType<unknown>;
+
+export const useCatalogManagementCreateOptionValue = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementCreateOptionValue>>,
+      TError,
+      {
+        productId: string;
+        optionId: string;
+        data: BodyType<CreateProductOptionValueDto>;
+      },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementCreateOptionValue>>,
+  TError,
+  {
+    productId: string;
+    optionId: string;
+    data: BodyType<CreateProductOptionValueDto>;
+  },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementCreateOptionValueMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementUpdateOptionValueUrl = (
+  productId: string,
+  valueId: string,
+) => {
+  return `/api/v1/seller/catalog/products/${productId}/option-values/${valueId}`;
+};
+
+export const catalogManagementUpdateOptionValue = async (
+  productId: string,
+  valueId: string,
+  updateProductOptionValueDto: UpdateProductOptionValueDto,
+  options?: RequestInit,
+): Promise<ProductDetailsResponseDto> => {
+  return apiFetcher<ProductDetailsResponseDto>(
+    getCatalogManagementUpdateOptionValueUrl(productId, valueId),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateProductOptionValueDto),
+    },
+  );
+};
+
+export const getCatalogManagementUpdateOptionValueMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementUpdateOptionValue>>,
+    TError,
+    {
+      productId: string;
+      valueId: string;
+      data: BodyType<UpdateProductOptionValueDto>;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementUpdateOptionValue>>,
+  TError,
+  {
+    productId: string;
+    valueId: string;
+    data: BodyType<UpdateProductOptionValueDto>;
+  },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementUpdateOptionValue"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementUpdateOptionValue>>,
+    {
+      productId: string;
+      valueId: string;
+      data: BodyType<UpdateProductOptionValueDto>;
+    }
+  > = (props) => {
+    const { productId, valueId, data } = props ?? {};
+
+    return catalogManagementUpdateOptionValue(
+      productId,
+      valueId,
+      data,
+      requestOptions,
+    );
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementUpdateOptionValueMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementUpdateOptionValue>>
+>;
+export type CatalogManagementUpdateOptionValueMutationBody =
+  BodyType<UpdateProductOptionValueDto>;
+export type CatalogManagementUpdateOptionValueMutationError =
+  ErrorType<unknown>;
+
+export const useCatalogManagementUpdateOptionValue = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementUpdateOptionValue>>,
+      TError,
+      {
+        productId: string;
+        valueId: string;
+        data: BodyType<UpdateProductOptionValueDto>;
+      },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementUpdateOptionValue>>,
+  TError,
+  {
+    productId: string;
+    valueId: string;
+    data: BodyType<UpdateProductOptionValueDto>;
+  },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementUpdateOptionValueMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementDeleteOptionValueUrl = (
+  productId: string,
+  valueId: string,
+) => {
+  return `/api/v1/seller/catalog/products/${productId}/option-values/${valueId}`;
+};
+
+export const catalogManagementDeleteOptionValue = async (
+  productId: string,
+  valueId: string,
+  options?: RequestInit,
+): Promise<ProductDetailsResponseDto> => {
+  return apiFetcher<ProductDetailsResponseDto>(
+    getCatalogManagementDeleteOptionValueUrl(productId, valueId),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getCatalogManagementDeleteOptionValueMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementDeleteOptionValue>>,
+    TError,
+    { productId: string; valueId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementDeleteOptionValue>>,
+  TError,
+  { productId: string; valueId: string },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementDeleteOptionValue"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementDeleteOptionValue>>,
+    { productId: string; valueId: string }
+  > = (props) => {
+    const { productId, valueId } = props ?? {};
+
+    return catalogManagementDeleteOptionValue(
+      productId,
+      valueId,
+      requestOptions,
+    );
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementDeleteOptionValueMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementDeleteOptionValue>>
+>;
+
+export type CatalogManagementDeleteOptionValueMutationError =
+  ErrorType<unknown>;
+
+export const useCatalogManagementDeleteOptionValue = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementDeleteOptionValue>>,
+      TError,
+      { productId: string; valueId: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementDeleteOptionValue>>,
+  TError,
+  { productId: string; valueId: string },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementDeleteOptionValueMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementCreateVariantUrl = (productId: string) => {
+  return `/api/v1/seller/catalog/products/${productId}/variants`;
+};
+
+export const catalogManagementCreateVariant = async (
+  productId: string,
+  createProductVariantDto: CreateProductVariantDto,
+  options?: RequestInit,
+): Promise<ProductDetailsResponseDto> => {
+  return apiFetcher<ProductDetailsResponseDto>(
+    getCatalogManagementCreateVariantUrl(productId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createProductVariantDto),
+    },
+  );
+};
+
+export const getCatalogManagementCreateVariantMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementCreateVariant>>,
+    TError,
+    { productId: string; data: BodyType<CreateProductVariantDto> },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementCreateVariant>>,
+  TError,
+  { productId: string; data: BodyType<CreateProductVariantDto> },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementCreateVariant"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementCreateVariant>>,
+    { productId: string; data: BodyType<CreateProductVariantDto> }
+  > = (props) => {
+    const { productId, data } = props ?? {};
+
+    return catalogManagementCreateVariant(productId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementCreateVariantMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementCreateVariant>>
+>;
+export type CatalogManagementCreateVariantMutationBody =
+  BodyType<CreateProductVariantDto>;
+export type CatalogManagementCreateVariantMutationError = ErrorType<unknown>;
+
+export const useCatalogManagementCreateVariant = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementCreateVariant>>,
+      TError,
+      { productId: string; data: BodyType<CreateProductVariantDto> },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementCreateVariant>>,
+  TError,
+  { productId: string; data: BodyType<CreateProductVariantDto> },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementCreateVariantMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementUpdateVariantUrl = (
+  productId: string,
+  variantId: string,
+) => {
+  return `/api/v1/seller/catalog/products/${productId}/variants/${variantId}`;
+};
+
+export const catalogManagementUpdateVariant = async (
+  productId: string,
+  variantId: string,
+  updateProductVariantDto: UpdateProductVariantDto,
+  options?: RequestInit,
+): Promise<ProductDetailsResponseDto> => {
+  return apiFetcher<ProductDetailsResponseDto>(
+    getCatalogManagementUpdateVariantUrl(productId, variantId),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateProductVariantDto),
+    },
+  );
+};
+
+export const getCatalogManagementUpdateVariantMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementUpdateVariant>>,
+    TError,
+    {
+      productId: string;
+      variantId: string;
+      data: BodyType<UpdateProductVariantDto>;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementUpdateVariant>>,
+  TError,
+  {
+    productId: string;
+    variantId: string;
+    data: BodyType<UpdateProductVariantDto>;
+  },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementUpdateVariant"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementUpdateVariant>>,
+    {
+      productId: string;
+      variantId: string;
+      data: BodyType<UpdateProductVariantDto>;
+    }
+  > = (props) => {
+    const { productId, variantId, data } = props ?? {};
+
+    return catalogManagementUpdateVariant(
+      productId,
+      variantId,
+      data,
+      requestOptions,
+    );
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementUpdateVariantMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementUpdateVariant>>
+>;
+export type CatalogManagementUpdateVariantMutationBody =
+  BodyType<UpdateProductVariantDto>;
+export type CatalogManagementUpdateVariantMutationError = ErrorType<unknown>;
+
+export const useCatalogManagementUpdateVariant = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementUpdateVariant>>,
+      TError,
+      {
+        productId: string;
+        variantId: string;
+        data: BodyType<UpdateProductVariantDto>;
+      },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementUpdateVariant>>,
+  TError,
+  {
+    productId: string;
+    variantId: string;
+    data: BodyType<UpdateProductVariantDto>;
+  },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementUpdateVariantMutationOptions(options),
+    queryClient,
+  );
+};
+export const getCatalogManagementArchiveVariantUrl = (
+  productId: string,
+  variantId: string,
+) => {
+  return `/api/v1/seller/catalog/products/${productId}/variants/${variantId}/archive`;
+};
+
+export const catalogManagementArchiveVariant = async (
+  productId: string,
+  variantId: string,
+  options?: RequestInit,
+): Promise<ProductDetailsResponseDto> => {
+  return apiFetcher<ProductDetailsResponseDto>(
+    getCatalogManagementArchiveVariantUrl(productId, variantId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getCatalogManagementArchiveVariantMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof catalogManagementArchiveVariant>>,
+    TError,
+    { productId: string; variantId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetcher>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof catalogManagementArchiveVariant>>,
+  TError,
+  { productId: string; variantId: string },
+  TContext
+> => {
+  const mutationKey = ["catalogManagementArchiveVariant"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof catalogManagementArchiveVariant>>,
+    { productId: string; variantId: string }
+  > = (props) => {
+    const { productId, variantId } = props ?? {};
+
+    return catalogManagementArchiveVariant(
+      productId,
+      variantId,
+      requestOptions,
+    );
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CatalogManagementArchiveVariantMutationResult = NonNullable<
+  Awaited<ReturnType<typeof catalogManagementArchiveVariant>>
+>;
+
+export type CatalogManagementArchiveVariantMutationError = ErrorType<unknown>;
+
+export const useCatalogManagementArchiveVariant = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof catalogManagementArchiveVariant>>,
+      TError,
+      { productId: string; variantId: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetcher>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof catalogManagementArchiveVariant>>,
+  TError,
+  { productId: string; variantId: string },
+  TContext
+> => {
+  return useMutation(
+    getCatalogManagementArchiveVariantMutationOptions(options),
     queryClient,
   );
 };

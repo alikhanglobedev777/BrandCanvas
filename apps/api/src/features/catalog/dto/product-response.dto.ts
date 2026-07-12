@@ -1,5 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { PRODUCT_STATUSES, STOCK_STATUSES, type ProductStatusValue, type StockStatusValue } from "./catalog.constants";
+import {
+  PRODUCT_STATUSES,
+  STOCK_STATUSES,
+  type ProductStatusValue,
+  type StockStatusValue,
+} from "./catalog.constants";
 
 export class ProductResponseDto {
   @ApiProperty({ format: "uuid" })

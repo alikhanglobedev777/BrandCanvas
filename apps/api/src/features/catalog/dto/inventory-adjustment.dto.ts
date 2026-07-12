@@ -1,6 +1,17 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsIn, IsInt, IsString, Max, MaxLength, Min, MinLength } from "class-validator";
-import { INVENTORY_ADJUSTMENT_TYPES, type InventoryAdjustmentTypeValue } from "./catalog.constants";
+import {
+  IsIn,
+  IsInt,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+} from "class-validator";
+import {
+  INVENTORY_ADJUSTMENT_TYPES,
+  type InventoryAdjustmentTypeValue,
+} from "./catalog.constants";
 
 export class InventoryAdjustmentDto {
   @ApiProperty({ enum: INVENTORY_ADJUSTMENT_TYPES })

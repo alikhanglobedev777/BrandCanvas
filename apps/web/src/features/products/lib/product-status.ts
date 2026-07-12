@@ -1,14 +1,21 @@
-import type { ProductResponseDtoStatus, ProductResponseDtoStockStatus } from "@brandcanvas/contracts";
+import type {
+  ProductResponseDtoStatus,
+  ProductResponseDtoStockStatus,
+} from "@brandcanvas/contracts";
 import type { StatusTone } from "@brandcanvas/ui";
 
-export function formatProductStatus(value: ProductResponseDtoStatus | ProductResponseDtoStockStatus): string {
+export function formatProductStatus(
+  value: ProductResponseDtoStatus | ProductResponseDtoStockStatus,
+): string {
   return value
     .split("_")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
 }
 
-export function getProductStatusTone(status: ProductResponseDtoStatus): StatusTone {
+export function getProductStatusTone(
+  status: ProductResponseDtoStatus,
+): StatusTone {
   switch (status) {
     case "active":
       return "success";
@@ -23,7 +30,9 @@ export function getProductStatusTone(status: ProductResponseDtoStatus): StatusTo
   }
 }
 
-export function getStockStatusTone(status: ProductResponseDtoStockStatus): StatusTone {
+export function getStockStatusTone(
+  status: ProductResponseDtoStockStatus,
+): StatusTone {
   switch (status) {
     case "in_stock":
       return "success";

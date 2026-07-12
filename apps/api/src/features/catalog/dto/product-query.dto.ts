@@ -1,7 +1,12 @@
 import { Type } from "class-transformer";
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsIn, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
-import { PRODUCT_STATUSES, STOCK_STATUSES, type ProductStatusValue, type StockStatusValue } from "./catalog.constants";
+import {
+  PRODUCT_STATUSES,
+  STOCK_STATUSES,
+  type ProductStatusValue,
+  type StockStatusValue,
+} from "./catalog.constants";
 
 export class ProductQueryDto {
   @ApiPropertyOptional({ type: Number, default: 1, minimum: 1 })

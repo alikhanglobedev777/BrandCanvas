@@ -3,7 +3,10 @@ import type { ProductEntity } from "../entities";
 
 export class ProductMapper {
   static toResponse(entity: ProductEntity): ProductResponseDto {
-    const availableQuantity = Math.max(0, entity.stockQuantity - entity.reservedQuantity);
+    const availableQuantity = Math.max(
+      0,
+      entity.stockQuantity - entity.reservedQuantity,
+    );
     return {
       id: entity.id,
       variantId: entity.variantId,
@@ -19,13 +22,19 @@ export class ProductMapper {
       reservedQuantity: entity.reservedQuantity,
       availableQuantity,
       lowStockThreshold: entity.lowStockThreshold,
-      stockStatus: this.getStockStatus(availableQuantity, entity.lowStockThreshold),
+      stockStatus: this.getStockStatus(
+        availableQuantity,
+        entity.lowStockThreshold,
+      ),
       createdAt: entity.createdAt.toISOString(),
       updatedAt: entity.updatedAt.toISOString(),
     };
   }
 
-  static getStockStatus(availableQuantity: number, lowStockThreshold: number): StockStatusValue {
+  static getStockStatus(
+    availableQuantity: number,
+    lowStockThreshold: number,
+  ): StockStatusValue {
     if (availableQuantity <= 0) return "out_of_stock";
     if (availableQuantity <= lowStockThreshold) return "low_stock";
     return "in_stock";

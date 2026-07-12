@@ -1,4 +1,8 @@
-import type { InventoryAdjustmentTypeValue, ProductStatusValue, StockStatusValue } from "../dto";
+import type {
+  InventoryAdjustmentTypeValue,
+  ProductStatusValue,
+  StockStatusValue,
+} from "../dto";
 import type { ProductEntity } from "../entities";
 
 export interface ProductListInput {
