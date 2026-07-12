@@ -13,7 +13,7 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 const timestamps = {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -55,6 +55,34 @@ export const inventoryMovementTypeEnum = pgEnum("inventory_movement_type", [
   "reservation",
   "reservation_release",
 ]);
+export const storeThemeLifecycleEnum = pgEnum("store_theme_lifecycle", [
+  "draft",
+  "published",
+  "archived",
+]);
+export const storeThemeFontEnum = pgEnum("store_theme_font", [
+  "system_sans",
+  "system_serif",
+  "georgia",
+  "arial",
+  "verdana",
+]);
+export const storeThemeHeaderLayoutEnum = pgEnum("store_theme_header_layout", [
+  "logo_left",
+  "logo_centered",
+]);
+export const storeThemeHeaderStyleEnum = pgEnum("store_theme_header_style", [
+  "solid",
+  "minimal",
+]);
+export const storeThemeFooterStyleEnum = pgEnum("store_theme_footer_style", [
+  "simple",
+  "columns",
+]);
+export const storeThemeProductCardStyleEnum = pgEnum(
+  "store_theme_product_card_style",
+  ["minimal", "bordered", "elevated"],
+);
 
 export const users = pgTable(
   "users",
@@ -128,6 +156,166 @@ export const storeMembers = pgTable(
   (table) => [
     uniqueIndex("store_members_store_user_unique").on(table.storeId, table.userId),
     index("store_members_user_idx").on(table.userId),
+  ],
+);
+
+export const storeSettings = pgTable(
+  "store_settings",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    displayName: varchar("display_name", { length: 150 }).notNull(),
+    description: text("description"),
+    contactEmail: varchar("contact_email", { length: 254 }),
+    contactPhone: varchar("contact_phone", { length: 32 }),
+    facebookUrl: text("facebook_url"),
+    instagramUrl: text("instagram_url"),
+    youtubeUrl: text("youtube_url"),
+    tiktokUrl: text("tiktok_url"),
+    xUrl: text("x_url"),
+    ...timestamps,
+  },
+  (table) => [uniqueIndex("store_settings_store_unique").on(table.storeId)],
+);
+
+export const storeAssets = pgTable(
+  "store_assets",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    category: varchar("category", { length: 50 }).notNull(),
+    storageProvider: varchar("storage_provider", { length: 32 }).notNull(),
+    storageKey: text("storage_key").notNull(),
+    publicUrl: text("public_url").notNull(),
+    originalFilename: varchar("original_filename", { length: 255 }).notNull(),
+    mimeType: varchar("mime_type", { length: 100 }).notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    width: integer("width"),
+    height: integer("height"),
+    isCurrent: boolean("is_current").default(false).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("store_assets_storage_key_unique").on(
+      table.storageProvider,
+      table.storageKey,
+    ),
+    uniqueIndex("store_assets_current_category_unique")
+      .on(table.storeId, table.category)
+      .where(sql`${table.isCurrent} = true`),
+    index("store_assets_store_category_idx").on(table.storeId, table.category),
+    check(
+      "store_assets_category_format",
+      sql`${table.category} ~ '^[a-z][a-z0-9_]{0,49}$'`,
+    ),
+    check("store_assets_size_positive", sql`${table.sizeBytes} > 0`),
+    check(
+      "store_assets_width_positive",
+      sql`${table.width} is null or ${table.width} > 0`,
+    ),
+    check(
+      "store_assets_height_positive",
+      sql`${table.height} is null or ${table.height} > 0`,
+    ),
+  ],
+);
+
+export const storeThemeConfigurations = pgTable(
+  "store_theme_configurations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    lifecycle: storeThemeLifecycleEnum("lifecycle").notNull(),
+    revision: integer("revision").default(1).notNull(),
+    publishedVersion: integer("published_version"),
+    primaryColor: varchar("primary_color", { length: 7 })
+      .default("#4F46E5")
+      .notNull(),
+    secondaryColor: varchar("secondary_color", { length: 7 })
+      .default("#0F766E")
+      .notNull(),
+    backgroundColor: varchar("background_color", { length: 7 })
+      .default("#FFFFFF")
+      .notNull(),
+    textColor: varchar("text_color", { length: 7 })
+      .default("#111827")
+      .notNull(),
+    headingFont: storeThemeFontEnum("heading_font")
+      .default("system_sans")
+      .notNull(),
+    bodyFont: storeThemeFontEnum("body_font").default("system_sans").notNull(),
+    headerLayout: storeThemeHeaderLayoutEnum("header_layout")
+      .default("logo_left")
+      .notNull(),
+    headerStyle: storeThemeHeaderStyleEnum("header_style")
+      .default("solid")
+      .notNull(),
+    headerSticky: boolean("header_sticky").default(true).notNull(),
+    headerShowLogo: boolean("header_show_logo").default(true).notNull(),
+    buttonRadius: integer("button_radius").default(8).notNull(),
+    cardRadius: integer("card_radius").default(12).notNull(),
+    productCardStyle: storeThemeProductCardStyleEnum("product_card_style")
+      .default("bordered")
+      .notNull(),
+    footerStyle: storeThemeFooterStyleEnum("footer_style")
+      .default("simple")
+      .notNull(),
+    footerShowContact: boolean("footer_show_contact").default(true).notNull(),
+    footerText: varchar("footer_text", { length: 200 }),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("store_theme_current_draft_unique")
+      .on(table.storeId)
+      .where(sql`${table.lifecycle} = 'draft'`),
+    uniqueIndex("store_theme_current_published_unique")
+      .on(table.storeId)
+      .where(sql`${table.lifecycle} = 'published'`),
+    uniqueIndex("store_theme_published_version_unique").on(
+      table.storeId,
+      table.publishedVersion,
+    ),
+    index("store_theme_history_idx").on(table.storeId, table.publishedAt),
+    check("store_theme_revision_positive", sql`${table.revision} > 0`),
+    check(
+      "store_theme_button_radius_range",
+      sql`${table.buttonRadius} between 0 and 32`,
+    ),
+    check(
+      "store_theme_card_radius_range",
+      sql`${table.cardRadius} between 0 and 32`,
+    ),
+    check(
+      "store_theme_publication_state_valid",
+      sql`(
+        (${table.lifecycle} = 'draft' and ${table.publishedVersion} is null and ${table.publishedAt} is null)
+        or
+        (${table.lifecycle} in ('published', 'archived') and ${table.publishedVersion} > 0 and ${table.publishedAt} is not null)
+      )`,
+    ),
+    check(
+      "store_theme_primary_color_hex",
+      sql`${table.primaryColor} ~ '^#[0-9A-Fa-f]{6}$'`,
+    ),
+    check(
+      "store_theme_secondary_color_hex",
+      sql`${table.secondaryColor} ~ '^#[0-9A-Fa-f]{6}$'`,
+    ),
+    check(
+      "store_theme_background_color_hex",
+      sql`${table.backgroundColor} ~ '^#[0-9A-Fa-f]{6}$'`,
+    ),
+    check(
+      "store_theme_text_color_hex",
+      sql`${table.textColor} ~ '^#[0-9A-Fa-f]{6}$'`,
+    ),
   ],
 );
 
@@ -283,3 +471,23 @@ export const sessions = pgTable(
   },
   (table) => [index("sessions_user_idx").on(table.userId), index("sessions_store_idx").on(table.storeId)],
 );
+
+export const storesRelations = relations(stores, ({ many, one }) => ({
+  owner: one(users, { fields: [stores.ownerId], references: [users.id] }),
+  members: many(storeMembers),
+  settings: one(storeSettings),
+  assets: many(storeAssets),
+  themeConfigurations: many(storeThemeConfigurations),
+}));
+
+export const storeSettingsRelations = relations(storeSettings, ({ one }) => ({
+  store: one(stores, { fields: [storeSettings.storeId], references: [stores.id] }),
+}));
+
+export const storeAssetsRelations = relations(storeAssets, ({ one }) => ({
+  store: one(stores, { fields: [storeAssets.storeId], references: [stores.id] }),
+}));
+
+export const storeThemeConfigurationsRelations = relations(storeThemeConfigurations, ({ one }) => ({
+  store: one(stores, { fields: [storeThemeConfigurations.storeId], references: [stores.id] }),
+}));

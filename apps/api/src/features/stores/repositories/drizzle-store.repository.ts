@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { sessions, storeMembers, stores, users } from "@brandcanvas/database";
+import { sessions, storeMembers, storeSettings, stores, storeThemeConfigurations, users } from "@brandcanvas/database";
 import { and, count, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { DatabaseService } from "../../../infrastructure/database";
 import type { StoreEntity } from "../entities";
@@ -129,6 +129,16 @@ export class DrizzleStoreRepository implements StoreRepository {
       if (!store) throw new Error("Failed to create store.");
 
       await tx.insert(storeMembers).values({ storeId: store.id, userId: owner.id, role: "owner" });
+      await tx.insert(storeSettings).values({ storeId: store.id, displayName: store.name });
+      await tx.insert(storeThemeConfigurations).values([
+        { storeId: store.id, lifecycle: "draft" },
+        {
+          storeId: store.id,
+          lifecycle: "published",
+          publishedVersion: 1,
+          publishedAt: new Date(),
+        },
+      ]);
 
       return this.toEntity({
         ...store,

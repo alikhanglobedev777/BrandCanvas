@@ -6,4 +6,5 @@
 export * from "./authentication";
 export * from "./health";
 export * from "./seller-catalog";
+export * from "./store-customization";
 export * from "./stores";

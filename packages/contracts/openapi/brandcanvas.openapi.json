@@ -548,6 +548,739 @@
           "Seller Catalog"
         ]
       }
+    },
+    "/api/v1/seller/store-customization/settings": {
+      "get": {
+        "operationId": "SellerStoreCustomization_getSettings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreSettingsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "summary": "Get settings for the authenticated seller store",
+        "tags": [
+          "Store Customization"
+        ]
+      },
+      "patch": {
+        "operationId": "SellerStoreCustomization_updateSettings",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStoreSettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreSettingsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "summary": "Update profile, contact information, and social links",
+        "tags": [
+          "Store Customization"
+        ]
+      }
+    },
+    "/api/v1/seller/store-customization/theme/draft": {
+      "get": {
+        "operationId": "SellerStoreCustomization_getDraft",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreThemeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Store Customization"
+        ]
+      },
+      "put": {
+        "operationId": "SellerStoreCustomization_saveDraft",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveThemeDraftDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreThemeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Store Customization"
+        ]
+      }
+    },
+    "/api/v1/seller/store-customization/theme/preview": {
+      "get": {
+        "operationId": "SellerStoreCustomization_preview",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreThemeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "summary": "Get draft theme data for preview without publishing",
+        "tags": [
+          "Store Customization"
+        ]
+      }
+    },
+    "/api/v1/seller/store-customization/theme/publish": {
+      "post": {
+        "operationId": "SellerStoreCustomization_publish",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreThemeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Store Customization"
+        ]
+      }
+    },
+    "/api/v1/seller/store-customization/theme/versions": {
+      "get": {
+        "operationId": "SellerStoreCustomization_listVersions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThemeVersionListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Store Customization"
+        ]
+      }
+    },
+    "/api/v1/seller/store-customization/theme/versions/{version}/rollback": {
+      "post": {
+        "operationId": "SellerStoreCustomization_rollback",
+        "parameters": [
+          {
+            "name": "version",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreThemeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Store Customization"
+        ]
+      }
+    },
+    "/api/v1/seller/store-customization/assets": {
+      "post": {
+        "operationId": "SellerStoreCustomization_upsertAsset",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterStoreAssetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreAssetResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "summary": "Register or update store asset metadata",
+        "tags": [
+          "Store Customization"
+        ]
+      }
+    },
+    "/api/v1/seller/store-customization/assets/{assetId}": {
+      "delete": {
+        "operationId": "SellerStoreCustomization_removeAsset",
+        "parameters": [
+          {
+            "name": "assetId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreCustomizationMessageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Store Customization"
+        ]
+      }
+    },
+    "/api/v1/admin/stores/{storeId}/customization/settings": {
+      "get": {
+        "operationId": "AdminStoreCustomization_getSettings",
+        "parameters": [
+          {
+            "name": "storeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreSettingsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "summary": "Read settings for an explicitly selected store",
+        "tags": [
+          "Store Customization"
+        ]
+      },
+      "patch": {
+        "operationId": "AdminStoreCustomization_updateSettings",
+        "parameters": [
+          {
+            "name": "storeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStoreSettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreSettingsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Store Customization"
+        ]
+      }
+    },
+    "/api/v1/admin/stores/{storeId}/customization/theme/draft": {
+      "get": {
+        "operationId": "AdminStoreCustomization_getDraft",
+        "parameters": [
+          {
+            "name": "storeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreThemeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Store Customization"
+        ]
+      },
+      "put": {
+        "operationId": "AdminStoreCustomization_saveDraft",
+        "parameters": [
+          {
+            "name": "storeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveThemeDraftDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreThemeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Store Customization"
+        ]
+      }
+    },
+    "/api/v1/admin/stores/{storeId}/customization/theme/preview": {
+      "get": {
+        "operationId": "AdminStoreCustomization_preview",
+        "parameters": [
+          {
+            "name": "storeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreThemeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Store Customization"
+        ]
+      }
+    },
+    "/api/v1/admin/stores/{storeId}/customization/theme/publish": {
+      "post": {
+        "operationId": "AdminStoreCustomization_publish",
+        "parameters": [
+          {
+            "name": "storeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreThemeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Store Customization"
+        ]
+      }
+    },
+    "/api/v1/admin/stores/{storeId}/customization/theme/versions": {
+      "get": {
+        "operationId": "AdminStoreCustomization_listVersions",
+        "parameters": [
+          {
+            "name": "storeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThemeVersionListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Store Customization"
+        ]
+      }
+    },
+    "/api/v1/admin/stores/{storeId}/customization/theme/versions/{version}/rollback": {
+      "post": {
+        "operationId": "AdminStoreCustomization_rollback",
+        "parameters": [
+          {
+            "name": "storeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreThemeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Store Customization"
+        ]
+      }
+    },
+    "/api/v1/admin/stores/{storeId}/customization/assets": {
+      "post": {
+        "operationId": "AdminStoreCustomization_upsertAsset",
+        "parameters": [
+          {
+            "name": "storeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterStoreAssetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreAssetResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Store Customization"
+        ]
+      }
+    },
+    "/api/v1/admin/stores/{storeId}/customization/assets/{assetId}": {
+      "delete": {
+        "operationId": "AdminStoreCustomization_removeAsset",
+        "parameters": [
+          {
+            "name": "storeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "assetId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreCustomizationMessageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Store Customization"
+        ]
+      }
+    },
+    "/api/v1/storefront/stores/{slug}/theme": {
+      "get": {
+        "operationId": "PublicStoreCustomization_getPublishedTheme",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "glow-beauty",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreThemeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Read the current published theme for an active public storefront",
+        "tags": [
+          "Store Customization"
+        ]
+      }
     }
   },
   "info": {
@@ -1117,6 +1850,441 @@
           "type",
           "quantity",
           "reason"
+        ]
+      },
+      "StoreSocialLinksDto": {
+        "type": "object",
+        "properties": {
+          "facebookUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "instagramUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "youtubeUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "tiktokUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "xUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "StoreSettingsResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "storeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactEmail": {
+            "type": "string",
+            "nullable": true,
+            "format": "email"
+          },
+          "contactPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "socialLinks": {
+            "$ref": "#/components/schemas/StoreSocialLinksDto"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "storeId",
+          "displayName",
+          "socialLinks",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateStoreSettingsDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 150
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2000
+          },
+          "contactEmail": {
+            "type": "string",
+            "nullable": true,
+            "format": "email"
+          },
+          "contactPhone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 32
+          },
+          "socialLinks": {
+            "$ref": "#/components/schemas/StoreSocialLinksDto"
+          }
+        }
+      },
+      "ThemeColorsDto": {
+        "type": "object",
+        "properties": {
+          "primary": {
+            "type": "string",
+            "example": "#4F46E5",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "secondary": {
+            "type": "string",
+            "example": "#0F766E",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "background": {
+            "type": "string",
+            "example": "#FFFFFF",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "text": {
+            "type": "string",
+            "example": "#111827",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          }
+        },
+        "required": [
+          "primary",
+          "secondary",
+          "background",
+          "text"
+        ]
+      },
+      "ThemeTypographyDto": {
+        "type": "object",
+        "properties": {
+          "headingFont": {
+            "type": "string",
+            "enum": [
+              "system_sans",
+              "system_serif",
+              "georgia",
+              "arial",
+              "verdana"
+            ]
+          },
+          "bodyFont": {
+            "type": "string",
+            "enum": [
+              "system_sans",
+              "system_serif",
+              "georgia",
+              "arial",
+              "verdana"
+            ]
+          }
+        },
+        "required": [
+          "headingFont",
+          "bodyFont"
+        ]
+      },
+      "ThemeHeaderDto": {
+        "type": "object",
+        "properties": {
+          "layout": {
+            "type": "string",
+            "enum": [
+              "logo_left",
+              "logo_centered"
+            ]
+          },
+          "sticky": {
+            "type": "boolean"
+          },
+          "showLogo": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "layout",
+          "sticky",
+          "showLogo"
+        ]
+      },
+      "ThemeFooterDto": {
+        "type": "object",
+        "properties": {
+          "showContact": {
+            "type": "boolean"
+          },
+          "text": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "showContact"
+        ]
+      },
+      "StoreThemeResponseDto": {
+        "type": "object",
+        "properties": {
+          "colors": {
+            "$ref": "#/components/schemas/ThemeColorsDto"
+          },
+          "typography": {
+            "$ref": "#/components/schemas/ThemeTypographyDto"
+          },
+          "header": {
+            "$ref": "#/components/schemas/ThemeHeaderDto"
+          },
+          "footer": {
+            "$ref": "#/components/schemas/ThemeFooterDto"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "storeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lifecycle": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ]
+          },
+          "revision": {
+            "type": "number"
+          },
+          "publishedVersion": {
+            "type": "number",
+            "nullable": true
+          },
+          "publishedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "colors",
+          "typography",
+          "header",
+          "footer",
+          "id",
+          "storeId",
+          "lifecycle",
+          "revision",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "SaveThemeDraftDto": {
+        "type": "object",
+        "properties": {
+          "colors": {
+            "$ref": "#/components/schemas/ThemeColorsDto"
+          },
+          "typography": {
+            "$ref": "#/components/schemas/ThemeTypographyDto"
+          },
+          "header": {
+            "$ref": "#/components/schemas/ThemeHeaderDto"
+          },
+          "footer": {
+            "$ref": "#/components/schemas/ThemeFooterDto"
+          }
+        },
+        "required": [
+          "colors",
+          "typography",
+          "header",
+          "footer"
+        ]
+      },
+      "ThemeVersionListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoreThemeResponseDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "RegisterStoreAssetDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Provide to update existing metadata owned by this store."
+          },
+          "category": {
+            "type": "string",
+            "example": "logo",
+            "description": "logo, favicon, banner, or a future snake-case category."
+          },
+          "storageProvider": {
+            "type": "string",
+            "example": "local"
+          },
+          "storageKey": {
+            "type": "string"
+          },
+          "publicUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "originalFilename": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string",
+            "example": "image/png"
+          },
+          "sizeBytes": {
+            "type": "number",
+            "minimum": 1
+          },
+          "width": {
+            "type": "number",
+            "minimum": 1
+          },
+          "height": {
+            "type": "number",
+            "minimum": 1
+          },
+          "isCurrent": {
+            "type": "object",
+            "default": true
+          }
+        },
+        "required": [
+          "category",
+          "storageProvider",
+          "storageKey",
+          "publicUrl",
+          "originalFilename",
+          "mimeType",
+          "sizeBytes"
+        ]
+      },
+      "StoreAssetResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "storeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "category": {
+            "type": "string"
+          },
+          "storageProvider": {
+            "type": "string"
+          },
+          "publicUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "originalFilename": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "number"
+          },
+          "width": {
+            "type": "number",
+            "nullable": true
+          },
+          "height": {
+            "type": "number",
+            "nullable": true
+          },
+          "isCurrent": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "storeId",
+          "category",
+          "storageProvider",
+          "publicUrl",
+          "originalFilename",
+          "mimeType",
+          "sizeBytes",
+          "isCurrent",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "StoreCustomizationMessageDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
         ]
       }
     }

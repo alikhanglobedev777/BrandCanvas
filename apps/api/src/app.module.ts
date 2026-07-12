@@ -9,6 +9,7 @@ import { DatabaseModule } from "./infrastructure/database";
 import { AuthModule } from "./features/auth";
 import { StoresModule } from "./features/stores";
 import { CatalogModule } from "./features/catalog";
+import { StoreCustomizationModule } from "./features/store-customization";
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { CatalogModule } from "./features/catalog";
     AuthModule,
     StoresModule,
     CatalogModule,
+    StoreCustomizationModule,
   ],
   controllers: [AppController],
   providers: [

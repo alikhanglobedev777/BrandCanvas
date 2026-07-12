@@ -1,6 +1,6 @@
 ﻿import "reflect-metadata";
 import fastifyCookie from "@fastify/cookie";
-import { ValidationPipe } from "@nestjs/common";
+import { BadRequestException, ValidationPipe } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
 import { FastifyAdapter, type NestFastifyApplication } from "@nestjs/platform-fastify";
@@ -30,6 +30,13 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      validationError: { target: false, value: false },
+      exceptionFactory: (errors) =>
+        new BadRequestException({
+          code: "VALIDATION_FAILED",
+          message: "Request validation failed.",
+          details: errors,
+        }),
     }),
   );
 
@@ -48,4 +55,3 @@ async function bootstrap() {
 }
 
 void bootstrap();
-

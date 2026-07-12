@@ -15,9 +15,6 @@ coverage/
 .env.*.local
 !.env.example
 
-# Database generated files
-packages/database/drizzle/
-
 # Logs
 *.log
 pnpm-debug.log*
