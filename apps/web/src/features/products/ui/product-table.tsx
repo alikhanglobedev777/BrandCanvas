@@ -67,7 +67,7 @@ export function ProductTable({ products }: { products: ProductResponseDto[] }) {
                 {new Intl.NumberFormat("en-PK", {
                   style: "currency",
                   currency: "PKR",
-                }).format(Number(product.price))}
+                }).format(product.priceMinor / 100)}
               </TableCell>
               <TableCell>
                 <StatusChip

@@ -1,6 +1,7 @@
 import {
   boolean,
   check,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -72,15 +73,24 @@ export const orderStatusEnum = pgEnum("order_status", [
 export const inventoryMovementTypeEnum = pgEnum("inventory_movement_type", [
   "initial_stock",
   "purchase",
-  "sale",
   "return",
   "order_cancelled",
   "damaged",
   "manual_increase",
   "manual_decrease",
+  "set_quantity",
   "reservation",
   "reservation_release",
+  "reservation_expiry",
+  "sale",
+  "cancellation_restore",
+  "return_restore",
+  "correction",
 ]);
+export const inventoryReservationStatusEnum = pgEnum(
+  "inventory_reservation_status",
+  ["active", "converted", "released", "expired", "cancelled"],
+);
 export const storeThemeLifecycleEnum = pgEnum("store_theme_lifecycle", [
   "draft",
   "published",
@@ -242,6 +252,7 @@ export const storeAssets = pgTable(
     ...timestamps,
   },
   (table) => [
+    uniqueIndex("store_assets_store_id_unique").on(table.storeId, table.id),
     uniqueIndex("store_assets_storage_key_unique").on(
       table.storageProvider,
       table.storageKey,
@@ -371,15 +382,17 @@ export const productCategories = pgTable(
     name: varchar("name", { length: 120 }).notNull(),
     slug: varchar("slug", { length: 150 }).notNull(),
     description: text("description"),
-    imageAssetId: uuid("image_asset_id").references(() => storeAssets.id, {
-      onDelete: "set null",
-    }),
+    imageAssetId: uuid("image_asset_id"),
     sortOrder: integer("sort_order").default(0).notNull(),
     status: categoryStatusEnum("status").default("active").notNull(),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
     ...timestamps,
   },
   (table) => [
+    uniqueIndex("product_categories_store_id_unique").on(
+      table.storeId,
+      table.id,
+    ),
     uniqueIndex("product_categories_store_slug_unique").on(
       table.storeId,
       table.slug,
@@ -392,6 +405,11 @@ export const productCategories = pgTable(
       "product_categories_sort_order_nonnegative",
       sql`${table.sortOrder} >= 0`,
     ),
+    foreignKey({
+      columns: [table.storeId, table.imageAssetId],
+      foreignColumns: [storeAssets.storeId, storeAssets.id],
+      name: "product_categories_store_image_asset_fk",
+    }).onDelete("restrict"),
   ],
 );
 
@@ -411,6 +429,7 @@ export const collections = pgTable(
     ...timestamps,
   },
   (table) => [
+    uniqueIndex("collections_store_id_unique").on(table.storeId, table.id),
     uniqueIndex("collections_store_slug_unique").on(table.storeId, table.slug),
     index("collections_store_status_idx").on(table.storeId, table.status),
     check("collections_sort_order_nonnegative", sql`${table.sortOrder} >= 0`),
@@ -427,9 +446,7 @@ export const products = pgTable(
     name: varchar("name", { length: 180 }).notNull(),
     slug: varchar("slug", { length: 180 }).notNull(),
     description: text("description"),
-    categoryId: uuid("category_id").references(() => productCategories.id, {
-      onDelete: "set null",
-    }),
+    categoryId: uuid("category_id"),
     priceMinor: integer("price_minor").default(0).notNull(),
     compareAtPriceMinor: integer("compare_at_price_minor"),
     costPriceMinor: integer("cost_price_minor"),
@@ -443,6 +460,7 @@ export const products = pgTable(
     ...timestamps,
   },
   (table) => [
+    uniqueIndex("products_store_id_unique").on(table.storeId, table.id),
     uniqueIndex("products_store_slug_unique").on(table.storeId, table.slug),
     index("products_store_status_idx").on(table.storeId, table.status),
     index("products_store_category_idx").on(table.storeId, table.categoryId),
@@ -455,6 +473,11 @@ export const products = pgTable(
       "products_cost_price_nonnegative",
       sql`${table.costPriceMinor} is null or ${table.costPriceMinor} >= 0`,
     ),
+    foreignKey({
+      columns: [table.storeId, table.categoryId],
+      foreignColumns: [productCategories.storeId, productCategories.id],
+      name: "products_store_category_fk",
+    }).onDelete("restrict"),
   ],
 );
 
@@ -465,15 +488,10 @@ export const productVariants = pgTable(
     storeId: uuid("store_id")
       .notNull()
       .references(() => stores.id, { onDelete: "cascade" }),
-    productId: uuid("product_id")
-      .notNull()
-      .references(() => products.id, { onDelete: "cascade" }),
-    name: varchar("name", { length: 180 }).notNull(),
+    productId: uuid("product_id").notNull(),
     title: varchar("title", { length: 180 }).default("Default").notNull(),
     sku: varchar("sku", { length: 100 }).notNull(),
     barcode: varchar("barcode", { length: 100 }),
-    price: numeric("price", { precision: 12, scale: 2 }).notNull(),
-    compareAtPrice: numeric("compare_at_price", { precision: 12, scale: 2 }),
     priceOverrideMinor: integer("price_override_minor"),
     compareAtPriceMinor: integer("compare_at_price_minor"),
     costPriceMinor: integer("cost_price_minor"),
@@ -483,12 +501,17 @@ export const productVariants = pgTable(
     ...timestamps,
   },
   (table) => [
+    uniqueIndex("product_variants_store_id_unique").on(table.storeId, table.id),
+    uniqueIndex("product_variants_store_product_id_unique").on(
+      table.storeId,
+      table.productId,
+      table.id,
+    ),
     uniqueIndex("product_variants_store_sku_unique").on(
       table.storeId,
       table.sku,
     ),
     index("product_variants_product_idx").on(table.productId),
-    check("product_variants_price_nonnegative", sql`${table.price} >= 0`),
     check(
       "product_variants_price_override_nonnegative",
       sql`${table.priceOverrideMinor} is null or ${table.priceOverrideMinor} >= 0`,
@@ -501,18 +524,22 @@ export const productVariants = pgTable(
       "product_variants_cost_price_nonnegative",
       sql`${table.costPriceMinor} is null or ${table.costPriceMinor} >= 0`,
     ),
+    foreignKey({
+      columns: [table.storeId, table.productId],
+      foreignColumns: [products.storeId, products.id],
+      name: "product_variants_store_product_fk",
+    }).onDelete("cascade"),
   ],
 );
 
 export const collectionProducts = pgTable(
   "collection_products",
   {
-    collectionId: uuid("collection_id")
+    storeId: uuid("store_id")
       .notNull()
-      .references(() => collections.id, { onDelete: "cascade" }),
-    productId: uuid("product_id")
-      .notNull()
-      .references(() => products.id, { onDelete: "cascade" }),
+      .references(() => stores.id, { onDelete: "cascade" }),
+    collectionId: uuid("collection_id").notNull(),
+    productId: uuid("product_id").notNull(),
     sortOrder: integer("sort_order").default(0).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
@@ -520,6 +547,7 @@ export const collectionProducts = pgTable(
   },
   (table) => [
     uniqueIndex("collection_products_unique").on(
+      table.storeId,
       table.collectionId,
       table.productId,
     ),
@@ -528,6 +556,16 @@ export const collectionProducts = pgTable(
       "collection_products_sort_order_nonnegative",
       sql`${table.sortOrder} >= 0`,
     ),
+    foreignKey({
+      columns: [table.storeId, table.collectionId],
+      foreignColumns: [collections.storeId, collections.id],
+      name: "collection_products_store_collection_fk",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.storeId, table.productId],
+      foreignColumns: [products.storeId, products.id],
+      name: "collection_products_store_product_fk",
+    }).onDelete("cascade"),
   ],
 );
 
@@ -535,23 +573,36 @@ export const productOptions = pgTable(
   "product_options",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    productId: uuid("product_id")
+    storeId: uuid("store_id")
       .notNull()
-      .references(() => products.id, { onDelete: "cascade" }),
+      .references(() => stores.id, { onDelete: "cascade" }),
+    productId: uuid("product_id").notNull(),
     name: varchar("name", { length: 80 }).notNull(),
     position: integer("position").default(0).notNull(),
     ...timestamps,
   },
   (table) => [
+    uniqueIndex("product_options_store_product_id_unique").on(
+      table.storeId,
+      table.productId,
+      table.id,
+    ),
     uniqueIndex("product_options_product_name_unique").on(
+      table.storeId,
       table.productId,
       table.name,
     ),
     uniqueIndex("product_options_product_position_unique").on(
+      table.storeId,
       table.productId,
       table.position,
     ),
     check("product_options_position_nonnegative", sql`${table.position} >= 0`),
+    foreignKey({
+      columns: [table.storeId, table.productId],
+      foreignColumns: [products.storeId, products.id],
+      name: "product_options_store_product_fk",
+    }).onDelete("cascade"),
   ],
 );
 
@@ -559,19 +610,28 @@ export const productOptionValues = pgTable(
   "product_option_values",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    optionId: uuid("option_id")
+    storeId: uuid("store_id")
       .notNull()
-      .references(() => productOptions.id, { onDelete: "cascade" }),
+      .references(() => stores.id, { onDelete: "cascade" }),
+    productId: uuid("product_id").notNull(),
+    optionId: uuid("option_id").notNull(),
     value: varchar("value", { length: 100 }).notNull(),
     position: integer("position").default(0).notNull(),
     ...timestamps,
   },
   (table) => [
+    uniqueIndex("product_option_values_store_product_id_unique").on(
+      table.storeId,
+      table.productId,
+      table.id,
+    ),
     uniqueIndex("product_option_values_option_value_unique").on(
+      table.storeId,
       table.optionId,
       table.value,
     ),
     uniqueIndex("product_option_values_option_position_unique").on(
+      table.storeId,
       table.optionId,
       table.position,
     ),
@@ -579,25 +639,116 @@ export const productOptionValues = pgTable(
       "product_option_values_position_nonnegative",
       sql`${table.position} >= 0`,
     ),
+    foreignKey({
+      columns: [table.storeId, table.productId, table.optionId],
+      foreignColumns: [
+        productOptions.storeId,
+        productOptions.productId,
+        productOptions.id,
+      ],
+      name: "product_option_values_store_product_option_fk",
+    }).onDelete("cascade"),
   ],
 );
 
 export const productVariantValues = pgTable(
   "product_variant_values",
   {
-    variantId: uuid("variant_id")
+    storeId: uuid("store_id")
       .notNull()
-      .references(() => productVariants.id, { onDelete: "cascade" }),
-    optionValueId: uuid("option_value_id")
-      .notNull()
-      .references(() => productOptionValues.id, { onDelete: "cascade" }),
+      .references(() => stores.id, { onDelete: "cascade" }),
+    productId: uuid("product_id").notNull(),
+    variantId: uuid("variant_id").notNull(),
+    optionValueId: uuid("option_value_id").notNull(),
   },
   (table) => [
     uniqueIndex("product_variant_values_unique").on(
+      table.storeId,
       table.variantId,
       table.optionValueId,
     ),
     index("product_variant_values_option_value_idx").on(table.optionValueId),
+    foreignKey({
+      columns: [table.storeId, table.productId, table.variantId],
+      foreignColumns: [
+        productVariants.storeId,
+        productVariants.productId,
+        productVariants.id,
+      ],
+      name: "product_variant_values_store_product_variant_fk",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.storeId, table.productId, table.optionValueId],
+      foreignColumns: [
+        productOptionValues.storeId,
+        productOptionValues.productId,
+        productOptionValues.id,
+      ],
+      name: "product_variant_values_store_product_option_value_fk",
+    }).onDelete("cascade"),
+  ],
+);
+
+export const productImages = pgTable(
+  "product_images",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    productId: uuid("product_id").notNull(),
+    variantId: uuid("variant_id"),
+    storageProvider: varchar("storage_provider", { length: 32 }).notNull(),
+    storageKey: text("storage_key").notNull(),
+    publicUrl: text("public_url").notNull(),
+    originalFilename: varchar("original_filename", { length: 255 }).notNull(),
+    mimeType: varchar("mime_type", { length: 100 }).notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    width: integer("width").notNull(),
+    height: integer("height").notNull(),
+    altText: varchar("alt_text", { length: 250 }),
+    position: integer("position").default(0).notNull(),
+    isPrimary: boolean("is_primary").default(false).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("product_images_store_id_unique").on(table.storeId, table.id),
+    uniqueIndex("product_images_storage_key_unique").on(
+      table.storageProvider,
+      table.storageKey,
+    ),
+    uniqueIndex("product_images_product_position_unique").on(
+      table.storeId,
+      table.productId,
+      table.position,
+    ),
+    uniqueIndex("product_images_product_primary_unique")
+      .on(table.storeId, table.productId)
+      .where(sql`${table.isPrimary} = true`),
+    index("product_images_product_idx").on(
+      table.storeId,
+      table.productId,
+      table.position,
+    ),
+    index("product_images_variant_idx").on(table.storeId, table.variantId),
+    check("product_images_size_positive", sql`${table.sizeBytes} > 0`),
+    check("product_images_width_positive", sql`${table.width} > 0`),
+    check("product_images_height_positive", sql`${table.height} > 0`),
+    check("product_images_position_nonnegative", sql`${table.position} >= 0`),
+    foreignKey({
+      columns: [table.storeId, table.productId],
+      foreignColumns: [products.storeId, products.id],
+      name: "product_images_store_product_fk",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.storeId, table.productId, table.variantId],
+      foreignColumns: [
+        productVariants.storeId,
+        productVariants.productId,
+        productVariants.id,
+      ],
+      name: "product_images_store_product_variant_fk",
+    }).onDelete("restrict"),
   ],
 );
 
@@ -608,9 +759,8 @@ export const inventoryItems = pgTable(
     storeId: uuid("store_id")
       .notNull()
       .references(() => stores.id, { onDelete: "cascade" }),
-    variantId: uuid("variant_id")
-      .notNull()
-      .references(() => productVariants.id, { onDelete: "cascade" }),
+    productId: uuid("product_id").notNull(),
+    variantId: uuid("variant_id").notNull(),
     stockQuantity: integer("stock_quantity").default(0).notNull(),
     reservedQuantity: integer("reserved_quantity").default(0).notNull(),
     lowStockThreshold: integer("low_stock_threshold").default(5).notNull(),
@@ -618,6 +768,7 @@ export const inventoryItems = pgTable(
     ...timestamps,
   },
   (table) => [
+    uniqueIndex("inventory_items_store_id_unique").on(table.storeId, table.id),
     uniqueIndex("inventory_items_variant_unique").on(table.variantId),
     index("inventory_items_store_idx").on(table.storeId),
     check("inventory_stock_nonnegative", sql`${table.stockQuantity} >= 0`),
@@ -629,6 +780,15 @@ export const inventoryItems = pgTable(
       "inventory_reserved_not_above_stock",
       sql`${table.reservedQuantity} <= ${table.stockQuantity}`,
     ),
+    foreignKey({
+      columns: [table.storeId, table.productId, table.variantId],
+      foreignColumns: [
+        productVariants.storeId,
+        productVariants.productId,
+        productVariants.id,
+      ],
+      name: "inventory_items_store_variant_fk",
+    }).onDelete("cascade"),
   ],
 );
 
@@ -639,19 +799,26 @@ export const inventoryMovements = pgTable(
     storeId: uuid("store_id")
       .notNull()
       .references(() => stores.id, { onDelete: "cascade" }),
-    inventoryItemId: uuid("inventory_item_id")
-      .notNull()
-      .references(() => inventoryItems.id, { onDelete: "cascade" }),
-    type: inventoryMovementTypeEnum("type").notNull(),
-    quantity: integer("quantity").notNull(),
-    previousQuantity: integer("previous_quantity").notNull(),
-    newQuantity: integer("new_quantity").notNull(),
+    productId: uuid("product_id").notNull(),
+    variantId: uuid("variant_id"),
+    inventoryItemId: uuid("inventory_item_id").notNull(),
+    movementType: inventoryMovementTypeEnum("type").notNull(),
+    quantityDelta: integer("quantity").notNull(),
+    stockBefore: integer("previous_quantity").notNull(),
+    stockAfter: integer("new_quantity").notNull(),
+    reservedBefore: integer("reserved_before").default(0).notNull(),
+    reservedAfter: integer("reserved_after").default(0).notNull(),
     reason: text("reason"),
     referenceType: varchar("reference_type", { length: 50 }),
     referenceId: uuid("reference_id"),
-    createdBy: uuid("created_by").references(() => users.id, {
+    actorUserId: uuid("created_by").references(() => users.id, {
       onDelete: "set null",
     }),
+    idempotencyKey: varchar("idempotency_key", { length: 120 }),
+    metadata: jsonb("metadata")
+      .$type<Record<string, string | number | boolean | null>>()
+      .default(sql`'{}'::jsonb`)
+      .notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -661,6 +828,115 @@ export const inventoryMovements = pgTable(
       table.inventoryItemId,
       table.createdAt,
     ),
+    index("inventory_movements_store_product_created_idx").on(
+      table.storeId,
+      table.productId,
+      table.createdAt,
+    ),
+    uniqueIndex("inventory_movements_store_idempotency_unique")
+      .on(table.storeId, table.idempotencyKey)
+      .where(sql`${table.idempotencyKey} is not null`),
+    check(
+      "inventory_movements_stock_before_nonnegative",
+      sql`${table.stockBefore} >= 0`,
+    ),
+    check(
+      "inventory_movements_stock_after_nonnegative",
+      sql`${table.stockAfter} >= 0`,
+    ),
+    check(
+      "inventory_movements_reserved_before_valid",
+      sql`${table.reservedBefore} >= 0 and ${table.reservedBefore} <= ${table.stockBefore}`,
+    ),
+    check(
+      "inventory_movements_reserved_after_valid",
+      sql`${table.reservedAfter} >= 0 and ${table.reservedAfter} <= ${table.stockAfter}`,
+    ),
+    foreignKey({
+      columns: [table.storeId, table.inventoryItemId],
+      foreignColumns: [inventoryItems.storeId, inventoryItems.id],
+      name: "inventory_movements_store_inventory_item_fk",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.storeId, table.productId],
+      foreignColumns: [products.storeId, products.id],
+      name: "inventory_movements_store_product_fk",
+    }).onDelete("restrict"),
+    foreignKey({
+      columns: [table.storeId, table.productId, table.variantId],
+      foreignColumns: [
+        productVariants.storeId,
+        productVariants.productId,
+        productVariants.id,
+      ],
+      name: "inventory_movements_store_product_variant_fk",
+    }).onDelete("restrict"),
+  ],
+);
+
+export const inventoryReservations = pgTable(
+  "inventory_reservations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    productId: uuid("product_id").notNull(),
+    variantId: uuid("variant_id"),
+    inventoryItemId: uuid("inventory_item_id").notNull(),
+    quantity: integer("quantity").notNull(),
+    status: inventoryReservationStatusEnum("status")
+      .default("active")
+      .notNull(),
+    referenceType: varchar("reference_type", { length: 50 }).notNull(),
+    referenceId: uuid("reference_id").notNull(),
+    idempotencyKey: varchar("idempotency_key", { length: 120 }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    releasedAt: timestamp("released_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("inventory_reservations_store_id_unique").on(
+      table.storeId,
+      table.id,
+    ),
+    uniqueIndex("inventory_reservations_store_idempotency_unique").on(
+      table.storeId,
+      table.idempotencyKey,
+    ),
+    index("inventory_reservations_store_status_expires_idx").on(
+      table.storeId,
+      table.status,
+      table.expiresAt,
+    ),
+    index("inventory_reservations_reference_idx").on(
+      table.storeId,
+      table.referenceType,
+      table.referenceId,
+    ),
+    check(
+      "inventory_reservations_quantity_positive",
+      sql`${table.quantity} > 0`,
+    ),
+    foreignKey({
+      columns: [table.storeId, table.inventoryItemId],
+      foreignColumns: [inventoryItems.storeId, inventoryItems.id],
+      name: "inventory_reservations_store_inventory_item_fk",
+    }).onDelete("restrict"),
+    foreignKey({
+      columns: [table.storeId, table.productId],
+      foreignColumns: [products.storeId, products.id],
+      name: "inventory_reservations_store_product_fk",
+    }).onDelete("restrict"),
+    foreignKey({
+      columns: [table.storeId, table.productId, table.variantId],
+      foreignColumns: [
+        productVariants.storeId,
+        productVariants.productId,
+        productVariants.id,
+      ],
+      name: "inventory_reservations_store_product_variant_fk",
+    }).onDelete("restrict"),
   ],
 );
 

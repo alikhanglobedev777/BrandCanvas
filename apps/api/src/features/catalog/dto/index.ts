@@ -7,7 +7,34 @@ export {
   type StockStatusValue,
 } from "./catalog.constants";
 export { CreateProductDto } from "./create-product.dto";
-export { InventoryAdjustmentDto } from "./inventory-adjustment.dto";
+export {
+  INVENTORY_ADJUSTMENT_OPERATIONS,
+  INVENTORY_MOVEMENT_TYPES,
+  INVENTORY_RESERVATION_STATUSES,
+  InventoryAdjustmentRequestDto,
+  InventoryItemResponseDto,
+  InventoryListResponseDto,
+  InventoryMovementListResponseDto,
+  InventoryMovementQueryDto,
+  InventoryMovementResponseDto,
+  InventoryQueryDto,
+  InventoryReservationOperationResponseDto,
+  InventoryReservationResponseDto,
+  ProductInventoryResponseDto,
+  ReserveInventoryDto,
+  UpdateLowStockThresholdDto,
+  type InventoryAdjustmentOperationValue,
+  type InventoryMovementTypeValue,
+  type InventoryReservationStatusValue,
+} from "./inventory-management.dto";
+export {
+  ProductImageListResponseDto,
+  ProductImageMessageDto,
+  ProductImageResponseDto,
+  ReorderProductImagesDto,
+  UpdateProductImageDto,
+  UploadProductImageDto,
+} from "./product-image.dto";
 export { ProductListResponseDto } from "./product-list-response.dto";
 export { ProductQueryDto } from "./product-query.dto";
 export { ProductResponseDto } from "./product-response.dto";

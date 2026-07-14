@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  ParseUUIDPipe,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-} from "@nestjs/common";
+import { Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
 import {
   ApiCookieAuth,
   ApiCreatedResponse,
@@ -23,13 +13,12 @@ import { CsrfGuard } from "../../../common/guards/csrf.guard";
 import type { AuthenticatedUser } from "../../../common/types/authenticated-user";
 import {
   CreateProductDto,
-  InventoryAdjustmentDto,
   ProductListResponseDto,
   ProductQueryDto,
   ProductResponseDto,
 } from "../dto";
 import { CatalogService } from "../services";
-import { CatalogPermissionGuard, RequireCatalogPermission } from "../guards";
+import { CatalogPermissionGuard } from "../guards";
 
 @ApiTags("Seller Catalog")
 @ApiCookieAuth("brandcanvas_access")
@@ -62,25 +51,5 @@ export class CatalogController {
     @Body() input: CreateProductDto,
   ): Promise<ProductResponseDto> {
     return this.catalogService.create(user.storeId!, user.userId, input);
-  }
-
-  @Patch("inventory/:inventoryItemId/adjustment")
-  @RequireCatalogPermission("inventory")
-  @ApiOperation({
-    summary:
-      "Increase or decrease seller inventory and record an audit movement",
-  })
-  @ApiOkResponse({ type: ProductResponseDto })
-  adjustInventory(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param("inventoryItemId", ParseUUIDPipe) inventoryItemId: string,
-    @Body() input: InventoryAdjustmentDto,
-  ): Promise<ProductResponseDto> {
-    return this.catalogService.adjustInventory(
-      user.storeId!,
-      user.userId,
-      inventoryItemId,
-      input,
-    );
   }
 }

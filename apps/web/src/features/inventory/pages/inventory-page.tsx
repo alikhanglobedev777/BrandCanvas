@@ -1,12 +1,12 @@
 "use client";
 
 import {
-  type CatalogFindManyStockStatus,
-  getCatalogFindManyQueryKey,
-  type InventoryAdjustmentDto,
-  type ProductResponseDto,
-  useCatalogAdjustInventory,
-  useCatalogFindMany,
+  getInventoryManagementListQueryKey,
+  type InventoryAdjustmentRequestDto,
+  type InventoryItemResponseDto,
+  type InventoryManagementListStockStatus,
+  useInventoryManagementAdjust,
+  useInventoryManagementList,
 } from "@brandcanvas/contracts";
 import { LoadingState, PageHeader, SearchField } from "@brandcanvas/ui";
 import Alert from "@mui/material/Alert";
@@ -29,28 +29,30 @@ export function InventoryPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
-  const [stockStatus, setStockStatus] = useState<CatalogFindManyStockStatus | "all">("all");
-  const [selectedProduct, setSelectedProduct] = useState<ProductResponseDto | null>(null);
-
-  const inventory = useCatalogFindMany({
+  const [stockStatus, setStockStatus] = useState<
+    InventoryManagementListStockStatus | "all"
+  >("all");
+  const [selected, setSelected] = useState<InventoryItemResponseDto | null>(
+    null,
+  );
+  const inventory = useInventoryManagementList({
     page,
     pageSize: 10,
     ...(deferredSearch.trim() ? { search: deferredSearch.trim() } : {}),
     ...(stockStatus !== "all" ? { stockStatus } : {}),
   });
-
-  const adjustInventory = useCatalogAdjustInventory({
+  const adjust = useInventoryManagementAdjust({
     mutation: {
       onSuccess: async () => {
-        setSelectedProduct(null);
-        await queryClient.invalidateQueries({ queryKey: getCatalogFindManyQueryKey() });
+        setSelected(null);
+        await queryClient.invalidateQueries({
+          queryKey: getInventoryManagementListQueryKey(),
+        });
       },
     },
   });
-
-  const submitAdjustment = (data: InventoryAdjustmentDto) => {
-    if (!selectedProduct) return;
-    adjustInventory.mutate({ inventoryItemId: selectedProduct.inventoryItemId, data });
+  const submit = (data: InventoryAdjustmentRequestDto) => {
+    if (selected) adjust.mutate({ inventoryItemId: selected.id, data });
   };
 
   return (
@@ -58,7 +60,7 @@ export function InventoryPage() {
       <PageHeader
         eyebrow="Seller inventory"
         title="Inventory"
-        description="Stock status is calculated centrally. When available quantity reaches zero, the API reports the product as out of stock automatically."
+        description="Search every product variant, inspect available stock, and make audited adjustments."
       />
       <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
         <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
@@ -68,7 +70,7 @@ export function InventoryPage() {
               setSearch(event.target.value);
               setPage(1);
             }}
-            placeholder="Search product or SKU"
+            placeholder="Search product, variant, or SKU"
             sx={{ flex: 1 }}
           />
           <FormControl sx={{ minWidth: 190 }}>
@@ -77,7 +79,10 @@ export function InventoryPage() {
               label="Stock status"
               value={stockStatus}
               onChange={(event) => {
-                setStockStatus(event.target.value as CatalogFindManyStockStatus | "all");
+                setStockStatus(
+                  event.target.value as
+                    InventoryManagementListStockStatus | "all",
+                );
                 setPage(1);
               }}
             >
@@ -89,27 +94,33 @@ export function InventoryPage() {
           </FormControl>
         </Stack>
       </Paper>
-
       {inventory.isPending ? <LoadingState label="Loading inventory…" /> : null}
-      {inventory.isError ? <Alert severity="error">{getApiErrorMessage(inventory.error, "Unable to load inventory.")}</Alert> : null}
+      {inventory.isError ? (
+        <Alert severity="error">
+          {getApiErrorMessage(inventory.error, "Unable to load inventory.")}
+        </Alert>
+      ) : null}
       {inventory.data ? (
         <Stack spacing={3}>
-          <InventoryTable products={inventory.data.items} onAdjust={setSelectedProduct} />
+          <InventoryTable items={inventory.data.items} onAdjust={setSelected} />
           {inventory.data.totalPages > 1 ? (
-            <Pagination page={page} count={inventory.data.totalPages} onChange={(_, value) => setPage(value)} />
+            <Pagination
+              page={page}
+              count={inventory.data.totalPages}
+              onChange={(_, value) => setPage(value)}
+            />
           ) : null}
         </Stack>
       ) : null}
-
       <InventoryAdjustmentDialog
-        product={selectedProduct}
-        loading={adjustInventory.isPending}
-        error={adjustInventory.error}
+        item={selected}
+        loading={adjust.isPending}
+        error={adjust.error}
         onClose={() => {
-          adjustInventory.reset();
-          setSelectedProduct(null);
+          adjust.reset();
+          setSelected(null);
         }}
-        onSubmit={submitAdjustment}
+        onSubmit={submit}
       />
     </SellerGuard>
   );

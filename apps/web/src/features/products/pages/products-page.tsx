@@ -130,14 +130,7 @@ export function ProductsPage() {
           createProduct.reset();
           setCreateOpen(false);
         }}
-        onSubmit={(data) => {
-          const { compareAtPrice, ...requiredData } = data;
-          createProduct.mutate({
-            data: compareAtPrice
-              ? { ...requiredData, compareAtPrice }
-              : requiredData,
-          });
-        }}
+        onSubmit={(data) => createProduct.mutate({ data })}
       />
     </SellerGuard>
   );

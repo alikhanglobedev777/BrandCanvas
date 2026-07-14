@@ -42,8 +42,8 @@ export function CreateProductDialog({
       name: "",
       description: "",
       sku: "",
-      price: "",
-      compareAtPrice: "",
+      priceMinor: 0,
+      compareAtPriceMinor: null,
       initialStock: 0,
       lowStockThreshold: 5,
       status: CreateProductDtoStatus.draft,
@@ -101,25 +101,29 @@ export function CreateProductDialog({
         />
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
           <TextField
-            label="Price (PKR)"
-            error={Boolean(errors.price)}
-            helperText={errors.price?.message}
-            {...register("price", {
+            label="Selling price (minor units)"
+            type="number"
+            error={Boolean(errors.priceMinor)}
+            helperText={errors.priceMinor?.message ?? "For PKR, enter paisa."}
+            {...register("priceMinor", {
+              valueAsNumber: true,
               required: "Price is required.",
-              pattern: {
-                value: /^\d+(?:\.\d{1,2})?$/,
-                message: "Use a valid amount with up to 2 decimals.",
+              min: {
+                value: 0,
+                message: "Price cannot be negative.",
               },
             })}
           />
           <TextField
-            label="Compare-at price"
-            error={Boolean(errors.compareAtPrice)}
-            helperText={errors.compareAtPrice?.message}
-            {...register("compareAtPrice", {
-              pattern: {
-                value: /^$|^\d+(?:\.\d{1,2})?$/,
-                message: "Use a valid amount with up to 2 decimals.",
+            label="Compare-at price (minor units)"
+            type="number"
+            error={Boolean(errors.compareAtPriceMinor)}
+            helperText={errors.compareAtPriceMinor?.message}
+            {...register("compareAtPriceMinor", {
+              setValueAs: (value) => (value === "" ? null : Number(value)),
+              min: {
+                value: 0,
+                message: "Compare-at price cannot be negative.",
               },
             })}
           />

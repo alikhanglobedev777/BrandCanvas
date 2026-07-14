@@ -32,7 +32,6 @@ import type {
   CreateProductOptionDto,
   CreateProductOptionValueDto,
   CreateProductVariantDto,
-  InventoryAdjustmentDto,
   ProductDetailsResponseDto,
   ProductIdsDto,
   ProductListResponseDto,
@@ -331,102 +330,6 @@ export const useCatalogCreate = <
   TContext
 > => {
   return useMutation(getCatalogCreateMutationOptions(options), queryClient);
-};
-export const getCatalogAdjustInventoryUrl = (inventoryItemId: string) => {
-  return `/api/v1/seller/inventory/${inventoryItemId}/adjustment`;
-};
-
-/**
- * @summary Increase or decrease seller inventory and record an audit movement
- */
-export const catalogAdjustInventory = async (
-  inventoryItemId: string,
-  inventoryAdjustmentDto: InventoryAdjustmentDto,
-  options?: RequestInit,
-): Promise<ProductResponseDto> => {
-  return apiFetcher<ProductResponseDto>(
-    getCatalogAdjustInventoryUrl(inventoryItemId),
-    {
-      ...options,
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(inventoryAdjustmentDto),
-    },
-  );
-};
-
-export const getCatalogAdjustInventoryMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof catalogAdjustInventory>>,
-    TError,
-    { inventoryItemId: string; data: BodyType<InventoryAdjustmentDto> },
-    TContext
-  >;
-  request?: SecondParameter<typeof apiFetcher>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof catalogAdjustInventory>>,
-  TError,
-  { inventoryItemId: string; data: BodyType<InventoryAdjustmentDto> },
-  TContext
-> => {
-  const mutationKey = ["catalogAdjustInventory"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof catalogAdjustInventory>>,
-    { inventoryItemId: string; data: BodyType<InventoryAdjustmentDto> }
-  > = (props) => {
-    const { inventoryItemId, data } = props ?? {};
-
-    return catalogAdjustInventory(inventoryItemId, data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type CatalogAdjustInventoryMutationResult = NonNullable<
-  Awaited<ReturnType<typeof catalogAdjustInventory>>
->;
-export type CatalogAdjustInventoryMutationBody =
-  BodyType<InventoryAdjustmentDto>;
-export type CatalogAdjustInventoryMutationError = ErrorType<unknown>;
-
-/**
- * @summary Increase or decrease seller inventory and record an audit movement
- */
-export const useCatalogAdjustInventory = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof catalogAdjustInventory>>,
-      TError,
-      { inventoryItemId: string; data: BodyType<InventoryAdjustmentDto> },
-      TContext
-    >;
-    request?: SecondParameter<typeof apiFetcher>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof catalogAdjustInventory>>,
-  TError,
-  { inventoryItemId: string; data: BodyType<InventoryAdjustmentDto> },
-  TContext
-> => {
-  return useMutation(
-    getCatalogAdjustInventoryMutationOptions(options),
-    queryClient,
-  );
 };
 export const getCatalogManagementListCategoriesUrl = (
   params?: CatalogManagementListCategoriesParams,

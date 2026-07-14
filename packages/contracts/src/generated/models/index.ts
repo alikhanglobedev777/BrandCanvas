@@ -6,5 +6,7 @@
 export * from "./authentication";
 export * from "./health";
 export * from "./seller-catalog";
+export * from "./seller-inventory";
+export * from "./seller-product-images";
 export * from "./store-customization";
 export * from "./stores";

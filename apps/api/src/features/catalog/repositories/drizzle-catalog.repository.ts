@@ -12,7 +12,6 @@ import type { ProductEntity } from "../entities";
 import {
   CatalogRepository,
   type CreateProductPersistenceInput,
-  type InventoryAdjustmentResult,
   type ProductListInput,
   type ProductListResult,
 } from "./catalog.repository";
@@ -26,8 +25,8 @@ const selection = {
   description: products.description,
   status: products.status,
   sku: productVariants.sku,
-  price: productVariants.price,
-  compareAtPrice: productVariants.compareAtPrice,
+  priceMinor: products.priceMinor,
+  compareAtPriceMinor: products.compareAtPriceMinor,
   stockQuantity: inventoryItems.stockQuantity,
   reservedQuantity: inventoryItems.reservedQuantity,
   lowStockThreshold: inventoryItems.lowStockThreshold,
@@ -44,8 +43,8 @@ type ProductRow = {
   description: string | null;
   status: "draft" | "active" | "inactive" | "archived";
   sku: string;
-  price: string;
-  compareAtPrice: string | null;
+  priceMinor: number;
+  compareAtPriceMinor: number | null;
   stockQuantity: number;
   reservedQuantity: number;
   lowStockThreshold: number;
@@ -124,10 +123,8 @@ export class DrizzleCatalogRepository implements CatalogRepository {
           slug: input.slug,
           description: input.description,
           status: input.status,
-          priceMinor: Math.round(Number(input.price) * 100),
-          compareAtPriceMinor: input.compareAtPrice
-            ? Math.round(Number(input.compareAtPrice) * 100)
-            : null,
+          priceMinor: input.priceMinor,
+          compareAtPriceMinor: input.compareAtPriceMinor ?? null,
         })
         .returning();
       if (!product) throw new Error("Failed to create product.");
@@ -137,15 +134,10 @@ export class DrizzleCatalogRepository implements CatalogRepository {
         .values({
           storeId: input.storeId,
           productId: product.id,
-          name: "Default",
           sku: input.sku,
-          price: input.price,
-          compareAtPrice: input.compareAtPrice,
           title: "Default",
-          priceOverrideMinor: Math.round(Number(input.price) * 100),
-          compareAtPriceMinor: input.compareAtPrice
-            ? Math.round(Number(input.compareAtPrice) * 100)
-            : null,
+          priceOverrideMinor: input.priceMinor,
+          compareAtPriceMinor: input.compareAtPriceMinor ?? null,
           isDefault: true,
         })
         .returning();
@@ -155,6 +147,7 @@ export class DrizzleCatalogRepository implements CatalogRepository {
         .insert(inventoryItems)
         .values({
           storeId: input.storeId,
+          productId: product.id,
           variantId: variant.id,
           stockQuantity: input.initialStock,
           lowStockThreshold: input.lowStockThreshold,
@@ -162,18 +155,20 @@ export class DrizzleCatalogRepository implements CatalogRepository {
         .returning();
       if (!inventory) throw new Error("Failed to create inventory item.");
 
-      if (input.initialStock > 0) {
-        await tx.insert(inventoryMovements).values({
-          storeId: input.storeId,
-          inventoryItemId: inventory.id,
-          type: "initial_stock",
-          quantity: input.initialStock,
-          previousQuantity: 0,
-          newQuantity: input.initialStock,
-          reason: "Initial product stock",
-          createdBy: input.createdBy,
-        });
-      }
+      await tx.insert(inventoryMovements).values({
+        storeId: input.storeId,
+        productId: product.id,
+        variantId: variant.id,
+        inventoryItemId: inventory.id,
+        movementType: "initial_stock",
+        quantityDelta: input.initialStock,
+        stockBefore: 0,
+        stockAfter: input.initialStock,
+        reservedBefore: 0,
+        reservedAfter: 0,
+        reason: "Initial product stock",
+        actorUserId: input.createdBy,
+      });
 
       return this.toEntity({
         id: product.id,
@@ -184,75 +179,14 @@ export class DrizzleCatalogRepository implements CatalogRepository {
         description: product.description,
         status: product.status,
         sku: variant.sku,
-        price: variant.price,
-        compareAtPrice: variant.compareAtPrice,
+        priceMinor: product.priceMinor,
+        compareAtPriceMinor: product.compareAtPriceMinor,
         stockQuantity: inventory.stockQuantity,
         reservedQuantity: inventory.reservedQuantity,
         lowStockThreshold: inventory.lowStockThreshold,
         createdAt: product.createdAt,
         updatedAt: product.updatedAt,
       });
-    });
-  }
-
-  async adjustInventory(input: {
-    storeId: string;
-    inventoryItemId: string;
-    type: "manual_increase" | "manual_decrease";
-    quantity: number;
-    reason: string;
-    createdBy: string;
-  }): Promise<InventoryAdjustmentResult> {
-    return this.database.db.transaction(async (tx) => {
-      const [row] = await tx
-        .select(selection)
-        .from(inventoryItems)
-        .innerJoin(
-          productVariants,
-          eq(productVariants.id, inventoryItems.variantId),
-        )
-        .innerJoin(products, eq(products.id, productVariants.productId))
-        .where(
-          and(
-            eq(inventoryItems.id, input.inventoryItemId),
-            eq(inventoryItems.storeId, input.storeId),
-          ),
-        )
-        .limit(1)
-        .for("update");
-
-      if (!row) return { status: "not_found" };
-
-      const delta =
-        input.type === "manual_increase" ? input.quantity : -input.quantity;
-      const nextQuantity = row.stockQuantity + delta;
-      if (nextQuantity < row.reservedQuantity || nextQuantity < 0)
-        return { status: "insufficient_stock" };
-
-      await tx
-        .update(inventoryItems)
-        .set({ stockQuantity: nextQuantity, updatedAt: new Date() })
-        .where(eq(inventoryItems.id, input.inventoryItemId));
-
-      await tx.insert(inventoryMovements).values({
-        storeId: input.storeId,
-        inventoryItemId: input.inventoryItemId,
-        type: input.type,
-        quantity: delta,
-        previousQuantity: row.stockQuantity,
-        newQuantity: nextQuantity,
-        reason: input.reason,
-        createdBy: input.createdBy,
-      });
-
-      return {
-        status: "success",
-        product: this.toEntity({
-          ...row,
-          stockQuantity: nextQuantity,
-          updatedAt: new Date(),
-        }),
-      };
     });
   }
 

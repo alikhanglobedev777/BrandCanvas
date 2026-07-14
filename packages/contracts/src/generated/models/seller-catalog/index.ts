@@ -26,8 +26,6 @@ export * from "./createProductDtoStatus";
 export * from "./createProductOptionDto";
 export * from "./createProductOptionValueDto";
 export * from "./createProductVariantDto";
-export * from "./inventoryAdjustmentDto";
-export * from "./inventoryAdjustmentDtoType";
 export * from "./productDetailsResponseDto";
 export * from "./productDetailsResponseDtoStatus";
 export * from "./productIdsDto";

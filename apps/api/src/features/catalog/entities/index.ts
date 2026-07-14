@@ -8,3 +8,9 @@ export type {
   ProductOptionValueEntity,
   ProductVariantEntity,
 } from "./catalog-management.entity";
+export type {
+  InventoryItemEntity,
+  InventoryMovementEntity,
+  InventoryReservationEntity,
+} from "./inventory.entity";
+export type { ProductImageEntity } from "./product-image.entity";

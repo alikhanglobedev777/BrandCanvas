@@ -4,7 +4,6 @@ import {
   IsInt,
   IsOptional,
   IsString,
-  Matches,
   Max,
   MaxLength,
   Min,
@@ -31,17 +30,21 @@ export class CreateProductDto {
   @MaxLength(100)
   sku!: string;
 
-  @ApiProperty({ example: "2500.00", pattern: "^\\d+(?:\\.\\d{1,2})?$" })
-  @Matches(/^\d+(?:\.\d{1,2})?$/)
-  price!: string;
+  @ApiProperty({ example: 250000, minimum: 0 })
+  @IsInt()
+  @Min(0)
+  priceMinor!: number;
 
   @ApiPropertyOptional({
-    example: "3000.00",
-    pattern: "^\\d+(?:\\.\\d{1,2})?$",
+    type: Number,
+    example: 300000,
+    minimum: 0,
+    nullable: true,
   })
   @IsOptional()
-  @Matches(/^\d+(?:\.\d{1,2})?$/)
-  compareAtPrice?: string;
+  @IsInt()
+  @Min(0)
+  compareAtPriceMinor?: number | null;
 
   @ApiProperty({ type: Number, default: 0, minimum: 0 })
   @IsInt()

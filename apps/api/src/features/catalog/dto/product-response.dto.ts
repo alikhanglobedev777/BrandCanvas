@@ -31,11 +31,11 @@ export class ProductResponseDto {
   @ApiProperty()
   sku!: string;
 
-  @ApiProperty({ example: "2500.00" })
-  price!: string;
+  @ApiProperty({ example: 250000 })
+  priceMinor!: number;
 
-  @ApiPropertyOptional({ type: String, nullable: true, example: "3000.00" })
-  compareAtPrice!: string | null;
+  @ApiPropertyOptional({ type: Number, nullable: true, example: 300000 })
+  compareAtPriceMinor!: number | null;
 
   @ApiProperty({ type: Number })
   stockQuantity!: number;

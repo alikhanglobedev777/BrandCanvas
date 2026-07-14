@@ -8,10 +8,13 @@ export interface CreateProductDto {
   name: string;
   description?: string;
   sku: string;
-  /** @pattern ^\d+(?:\.\d{1,2})?$ */
-  price: string;
-  /** @pattern ^\d+(?:\.\d{1,2})?$ */
-  compareAtPrice?: string;
+  /** @minimum 0 */
+  priceMinor: number;
+  /**
+   * @minimum 0
+   * @nullable
+   */
+  compareAtPriceMinor?: number | null;
   /** @minimum 0 */
   initialStock: number;
   /**

@@ -217,4 +217,16 @@ describe("CatalogManagementService", () => {
     expect(repository.setCollectionArchived).toHaveBeenCalledTimes(2);
     expect(repository.setProductArchived).toHaveBeenCalledTimes(2);
   });
+
+  it("rejects duplicate collection product order entries before persistence", async () => {
+    await expect(
+      service.reorderCollectionProducts("store-a", "collection-a", [
+        "product-a",
+        "product-a",
+      ]),
+    ).rejects.toMatchObject({
+      response: { code: "COLLECTION_PRODUCT_ORDER_INVALID" },
+    });
+    expect(repository.reorderCollectionProducts).not.toHaveBeenCalled();
+  });
 });

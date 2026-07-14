@@ -49,6 +49,7 @@ import {
   type ProductEditFormValues,
 } from "../model/product-edit-form";
 import { ProductOptionsEditor } from "../ui/product-options-editor";
+import { ProductImagesSection } from "../ui/product-images-section";
 import { VariantDialog } from "../ui/variant-dialog";
 
 export function ProductDetailsPage() {
@@ -222,6 +223,7 @@ export function ProductDetailsPage() {
           {getApiErrorMessage(mutationError, "Unable to update product.")}
         </Alert>
       ) : null}
+      <ProductImagesSection productId={productId} variants={data.variants} />
       <Stack
         component="form"
         spacing={3}

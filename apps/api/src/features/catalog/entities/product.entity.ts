@@ -9,8 +9,8 @@ export interface ProductEntity {
   description: string | null;
   status: ProductStatusValue;
   sku: string;
-  price: string;
-  compareAtPrice: string | null;
+  priceMinor: number;
+  compareAtPriceMinor: number | null;
   stockQuantity: number;
   reservedQuantity: number;
   lowStockThreshold: number;

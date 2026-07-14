@@ -274,6 +274,7 @@ export class DrizzleCatalogManagementRepository extends CatalogManagementReposit
       .insert(collectionProducts)
       .values(
         productIds.map((productId, index) => ({
+          storeId,
           collectionId,
           productId,
           sortOrder: start + index,
@@ -309,7 +310,10 @@ export class DrizzleCatalogManagementRepository extends CatalogManagementReposit
     const collection = await this.findCollection(storeId, collectionId);
     if (!collection) return null;
     const current = collection.products.map((item) => item.productId).sort();
-    if (current.join("|") !== [...new Set(productIds)].sort().join("|"))
+    if (
+      productIds.length !== new Set(productIds).size ||
+      current.join("|") !== [...productIds].sort().join("|")
+    )
       return "invalid_order" as const;
     await this.database.db.transaction(async (tx) => {
       await Promise.all(
@@ -486,6 +490,7 @@ export class DrizzleCatalogManagementRepository extends CatalogManagementReposit
           if (collectionIds.length)
             await tx.insert(collectionProducts).values(
               collectionIds.map((collectionId, sortOrder) => ({
+                storeId,
                 collectionId,
                 productId,
                 sortOrder,
@@ -526,7 +531,7 @@ export class DrizzleCatalogManagementRepository extends CatalogManagementReposit
     if (!(await this.productExists(storeId, productId))) return null;
     await this.database.db
       .insert(productOptions)
-      .values({ productId, ...input });
+      .values({ storeId, productId, ...input });
     return this.findProductDetails(storeId, productId);
   }
   async updateOption(
@@ -571,7 +576,7 @@ export class DrizzleCatalogManagementRepository extends CatalogManagementReposit
     if (!(await this.optionExists(storeId, productId, optionId))) return null;
     await this.database.db
       .insert(productOptionValues)
-      .values({ optionId, ...input });
+      .values({ storeId, productId, optionId, ...input });
     return this.findProductDetails(storeId, productId);
   }
   async updateOptionValue(
@@ -643,22 +648,14 @@ export class DrizzleCatalogManagementRepository extends CatalogManagementReposit
     );
     if (validation !== "valid") return validation;
     await this.database.db.transaction(async (tx) => {
-      const effectiveMinor = input.priceOverrideMinor ?? 0;
       const [variant] = await tx
         .insert(productVariants)
         .values({
           storeId,
           productId,
-          name: input.title,
           title: input.title,
           sku: input.sku,
           barcode: input.barcode,
-          price: (effectiveMinor / 100).toFixed(2),
-          compareAtPrice:
-            input.compareAtPriceMinor === null ||
-            input.compareAtPriceMinor === undefined
-              ? null
-              : (input.compareAtPriceMinor / 100).toFixed(2),
           priceOverrideMinor: input.priceOverrideMinor,
           compareAtPriceMinor: input.compareAtPriceMinor,
           costPriceMinor: input.costPriceMinor,
@@ -670,26 +667,32 @@ export class DrizzleCatalogManagementRepository extends CatalogManagementReposit
         .insert(inventoryItems)
         .values({
           storeId,
+          productId,
           variantId: variant.id,
           stockQuantity: input.stockQuantity,
           lowStockThreshold: input.lowStockThreshold,
         })
         .returning();
       if (!inventory) throw new Error("Failed to create variant inventory.");
-      if (input.stockQuantity > 0)
-        await tx.insert(inventoryMovements).values({
-          storeId,
-          inventoryItemId: inventory.id,
-          type: "initial_stock",
-          quantity: input.stockQuantity,
-          previousQuantity: 0,
-          newQuantity: input.stockQuantity,
-          reason: "Initial variant stock",
-          createdBy: input.createdBy,
-        });
+      await tx.insert(inventoryMovements).values({
+        storeId,
+        productId,
+        variantId: variant.id,
+        inventoryItemId: inventory.id,
+        movementType: "initial_stock",
+        quantityDelta: input.stockQuantity,
+        stockBefore: 0,
+        stockAfter: input.stockQuantity,
+        reservedBefore: 0,
+        reservedAfter: 0,
+        reason: "Initial variant stock",
+        actorUserId: input.createdBy,
+      });
       if (input.optionValueIds.length)
         await tx.insert(productVariantValues).values(
           input.optionValueIds.map((optionValueId) => ({
+            storeId,
+            productId,
             variantId: variant.id,
             optionValueId,
           })),
@@ -753,7 +756,6 @@ export class DrizzleCatalogManagementRepository extends CatalogManagementReposit
         .update(productVariants)
         .set({
           ...variant,
-          ...(variant.title ? { name: variant.title } : {}),
           updatedAt: new Date(),
         })
         .where(eq(productVariants.id, variantId));
@@ -767,21 +769,32 @@ export class DrizzleCatalogManagementRepository extends CatalogManagementReposit
           })
           .where(eq(inventoryItems.variantId, variantId));
       if (
-        stockQuantity !== undefined &&
-        stockQuantity !== current.stockQuantity
+        (stockQuantity !== undefined &&
+          stockQuantity !== current.stockQuantity) ||
+        lowStockThreshold !== undefined
       )
         await tx.insert(inventoryMovements).values({
           storeId,
+          productId,
+          variantId,
           inventoryItemId: current.inventoryItemId,
-          type:
-            stockQuantity > current.stockQuantity
-              ? "manual_increase"
-              : "manual_decrease",
-          quantity: stockQuantity - current.stockQuantity,
-          previousQuantity: current.stockQuantity,
-          newQuantity: stockQuantity,
+          movementType:
+            stockQuantity === undefined ||
+            stockQuantity === current.stockQuantity
+              ? "correction"
+              : "set_quantity",
+          quantityDelta:
+            (stockQuantity ?? current.stockQuantity) - current.stockQuantity,
+          stockBefore: current.stockQuantity,
+          stockAfter: stockQuantity ?? current.stockQuantity,
+          reservedBefore: current.reservedQuantity,
+          reservedAfter: current.reservedQuantity,
           reason: "Variant inventory updated",
-          createdBy,
+          actorUserId: createdBy,
+          metadata:
+            lowStockThreshold === undefined
+              ? {}
+              : { newLowStockThreshold: lowStockThreshold },
         });
       if (optionValueIds) {
         await tx
@@ -790,6 +803,8 @@ export class DrizzleCatalogManagementRepository extends CatalogManagementReposit
         if (optionValueIds.length)
           await tx.insert(productVariantValues).values(
             optionValueIds.map((optionValueId) => ({
+              storeId,
+              productId,
               variantId,
               optionValueId,
             })),

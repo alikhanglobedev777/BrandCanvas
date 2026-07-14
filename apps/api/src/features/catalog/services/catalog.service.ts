@@ -2,11 +2,9 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
-  NotFoundException,
 } from "@nestjs/common";
 import {
   CreateProductDto,
-  InventoryAdjustmentDto,
   ProductListResponseDto,
   ProductQueryDto,
   ProductResponseDto,
@@ -46,8 +44,9 @@ export class CatalogService {
     input: CreateProductDto,
   ): Promise<ProductResponseDto> {
     if (
-      input.compareAtPrice &&
-      Number(input.compareAtPrice) < Number(input.price)
+      input.compareAtPriceMinor !== null &&
+      input.compareAtPriceMinor !== undefined &&
+      input.compareAtPriceMinor < input.priceMinor
     ) {
       throw new BadRequestException({
         code: "PRODUCT_PRICE_RELATION_INVALID",
@@ -65,10 +64,8 @@ export class CatalogService {
           : {}),
         status: input.status,
         sku: input.sku.trim().toUpperCase(),
-        price: input.price,
-        ...(input.compareAtPrice
-          ? { compareAtPrice: input.compareAtPrice }
-          : {}),
+        priceMinor: input.priceMinor,
+        compareAtPriceMinor: input.compareAtPriceMinor ?? null,
         initialStock: input.initialStock,
         lowStockThreshold: input.lowStockThreshold,
       });
@@ -82,32 +79,6 @@ export class CatalogService {
       }
       throw error;
     }
-  }
-
-  async adjustInventory(
-    storeId: string,
-    userId: string,
-    inventoryItemId: string,
-    input: InventoryAdjustmentDto,
-  ): Promise<ProductResponseDto> {
-    const result = await this.catalogRepository.adjustInventory({
-      storeId,
-      inventoryItemId,
-      type: input.type,
-      quantity: input.quantity,
-      reason: input.reason.trim(),
-      createdBy: userId,
-    });
-
-    if (result.status === "not_found")
-      throw new NotFoundException("Inventory item was not found.");
-    if (result.status === "insufficient_stock") {
-      throw new BadRequestException(
-        "This adjustment would make available inventory negative or below reserved stock.",
-      );
-    }
-
-    return ProductMapper.toResponse(result.product);
   }
 
   private toSlug(value: string): string {

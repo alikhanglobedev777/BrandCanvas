@@ -15,9 +15,9 @@ export interface ProductResponseDto {
   description?: string | null;
   status: ProductResponseDtoStatus;
   sku: string;
-  price: string;
+  priceMinor: number;
   /** @nullable */
-  compareAtPrice?: string | null;
+  compareAtPriceMinor?: number | null;
   stockQuantity: number;
   reservedQuantity: number;
   availableQuantity: number;

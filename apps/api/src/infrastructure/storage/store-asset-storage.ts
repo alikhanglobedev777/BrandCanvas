@@ -1,6 +1,6 @@
 export interface SaveStoreAssetFileInput {
   storeId: string;
-  category: "logo" | "favicon";
+  category: "logo" | "favicon" | "products";
   extension: "png" | "webp";
   content: Buffer;
   mimeType: "image/png" | "image/webp";
@@ -21,9 +21,7 @@ export interface StoredStoreAssetFile {
 }
 
 export abstract class StoreAssetStorage {
-  abstract save(
-    input: SaveStoreAssetFileInput,
-  ): Promise<StoredStoreAssetFile>;
+  abstract save(input: SaveStoreAssetFileInput): Promise<StoredStoreAssetFile>;
 
   abstract remove(storageKey: string): Promise<void>;
 }

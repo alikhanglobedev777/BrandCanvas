@@ -1,8 +1,4 @@
-import type {
-  InventoryAdjustmentTypeValue,
-  ProductStatusValue,
-  StockStatusValue,
-} from "../dto";
+import type { ProductStatusValue, StockStatusValue } from "../dto";
 import type { ProductEntity } from "../entities";
 
 export interface ProductListInput {
@@ -27,26 +23,13 @@ export interface CreateProductPersistenceInput {
   description?: string;
   status: ProductStatusValue;
   sku: string;
-  price: string;
-  compareAtPrice?: string;
+  priceMinor: number;
+  compareAtPriceMinor?: number | null;
   initialStock: number;
   lowStockThreshold: number;
 }
 
-export type InventoryAdjustmentResult =
-  | { status: "success"; product: ProductEntity }
-  | { status: "not_found" }
-  | { status: "insufficient_stock" };
-
 export abstract class CatalogRepository {
   abstract findMany(input: ProductListInput): Promise<ProductListResult>;
   abstract create(input: CreateProductPersistenceInput): Promise<ProductEntity>;
-  abstract adjustInventory(input: {
-    storeId: string;
-    inventoryItemId: string;
-    type: InventoryAdjustmentTypeValue;
-    quantity: number;
-    reason: string;
-    createdBy: string;
-  }): Promise<InventoryAdjustmentResult>;
 }

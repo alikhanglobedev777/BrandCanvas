@@ -255,6 +255,11 @@ export class CatalogManagementService {
     id: string,
     productIds: string[],
   ) {
+    if (productIds.length !== new Set(productIds).size)
+      this.bad(
+        "COLLECTION_PRODUCT_ORDER_INVALID",
+        "The order must contain every assigned product exactly once.",
+      );
     const result = await this.repository.reorderCollectionProducts(
       storeId,
       id,

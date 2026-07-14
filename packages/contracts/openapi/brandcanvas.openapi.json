@@ -503,52 +503,6 @@
         ]
       }
     },
-    "/api/v1/seller/inventory/{inventoryItemId}/adjustment": {
-      "patch": {
-        "operationId": "Catalog_adjustInventory",
-        "parameters": [
-          {
-            "name": "inventoryItemId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/InventoryAdjustmentDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "brandcanvas_access": []
-          }
-        ],
-        "summary": "Increase or decrease seller inventory and record an audit movement",
-        "tags": [
-          "Seller Catalog"
-        ]
-      }
-    },
     "/api/v1/seller/catalog/categories": {
       "get": {
         "operationId": "CatalogManagement_listCategories",
@@ -1770,6 +1724,785 @@
         ],
         "tags": [
           "Seller Catalog"
+        ]
+      }
+    },
+    "/api/v1/seller/catalog/products/{productId}/images": {
+      "get": {
+        "operationId": "ProductImage_list",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductImageListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Seller Product Images"
+        ]
+      },
+      "post": {
+        "operationId": "ProductImage_upload",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadProductImageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductImageResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "summary": "Upload and safely normalize a product image",
+        "tags": [
+          "Seller Product Images"
+        ]
+      }
+    },
+    "/api/v1/seller/catalog/products/{productId}/images/{imageId}": {
+      "get": {
+        "operationId": "ProductImage_get",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "imageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductImageResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Seller Product Images"
+        ]
+      },
+      "patch": {
+        "operationId": "ProductImage_update",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "imageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductImageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductImageResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Seller Product Images"
+        ]
+      },
+      "delete": {
+        "operationId": "ProductImage_delete",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "imageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductImageMessageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Seller Product Images"
+        ]
+      }
+    },
+    "/api/v1/seller/catalog/products/{productId}/images/order": {
+      "put": {
+        "operationId": "ProductImage_reorder",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderProductImagesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductImageListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Seller Product Images"
+        ]
+      }
+    },
+    "/api/v1/seller/catalog/products/{productId}/images/{imageId}/primary": {
+      "post": {
+        "operationId": "ProductImage_setPrimary",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "imageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductImageListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Seller Product Images"
+        ]
+      }
+    },
+    "/api/v1/seller/inventory": {
+      "get": {
+        "operationId": "InventoryManagement_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stockStatus",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "in_stock",
+                "low_stock",
+                "out_of_stock"
+              ]
+            }
+          },
+          {
+            "name": "productId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Seller Inventory"
+        ]
+      }
+    },
+    "/api/v1/seller/inventory/products/{productId}": {
+      "get": {
+        "operationId": "InventoryManagement_getProduct",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductInventoryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Seller Inventory"
+        ]
+      }
+    },
+    "/api/v1/seller/inventory/{inventoryItemId}/movements": {
+      "get": {
+        "operationId": "InventoryManagement_listMovements",
+        "parameters": [
+          {
+            "name": "inventoryItemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "movementType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "initial_stock",
+                "purchase",
+                "return",
+                "order_cancelled",
+                "damaged",
+                "manual_increase",
+                "manual_decrease",
+                "set_quantity",
+                "reservation",
+                "reservation_release",
+                "reservation_expiry",
+                "sale",
+                "cancellation_restore",
+                "return_restore",
+                "correction"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryMovementListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Seller Inventory"
+        ]
+      }
+    },
+    "/api/v1/seller/inventory/{inventoryItemId}/adjustments": {
+      "post": {
+        "operationId": "InventoryManagement_adjust",
+        "parameters": [
+          {
+            "name": "inventoryItemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryAdjustmentRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryItemResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Seller Inventory"
+        ]
+      }
+    },
+    "/api/v1/seller/inventory/{inventoryItemId}/threshold": {
+      "patch": {
+        "operationId": "InventoryManagement_updateThreshold",
+        "parameters": [
+          {
+            "name": "inventoryItemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLowStockThresholdDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryItemResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Seller Inventory"
+        ]
+      }
+    },
+    "/api/v1/seller/inventory/{inventoryItemId}/reservations": {
+      "post": {
+        "operationId": "InventoryManagement_reserve",
+        "parameters": [
+          {
+            "name": "inventoryItemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReserveInventoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryReservationOperationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Seller Inventory"
+        ]
+      }
+    },
+    "/api/v1/seller/inventory/reservations/{reservationId}/release": {
+      "post": {
+        "operationId": "InventoryManagement_release",
+        "parameters": [
+          {
+            "name": "reservationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryReservationOperationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Seller Inventory"
+        ]
+      }
+    },
+    "/api/v1/seller/inventory/reservations/{reservationId}/expire": {
+      "post": {
+        "operationId": "InventoryManagement_expire",
+        "parameters": [
+          {
+            "name": "reservationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryReservationOperationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Seller Inventory"
+        ]
+      }
+    },
+    "/api/v1/seller/inventory/reservations/{reservationId}/cancel": {
+      "post": {
+        "operationId": "InventoryManagement_cancel",
+        "parameters": [
+          {
+            "name": "reservationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryReservationOperationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Seller Inventory"
+        ]
+      }
+    },
+    "/api/v1/seller/inventory/reservations/{reservationId}/convert": {
+      "post": {
+        "operationId": "InventoryManagement_convert",
+        "parameters": [
+          {
+            "name": "reservationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryReservationOperationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "brandcanvas_access": []
+          }
+        ],
+        "tags": [
+          "Seller Inventory"
         ]
       }
     },
@@ -3013,14 +3746,14 @@
           "sku": {
             "type": "string"
           },
-          "price": {
-            "type": "string",
-            "example": "2500.00"
+          "priceMinor": {
+            "type": "number",
+            "example": 250000
           },
-          "compareAtPrice": {
-            "type": "string",
+          "compareAtPriceMinor": {
+            "type": "number",
             "nullable": true,
-            "example": "3000.00"
+            "example": 300000
           },
           "stockQuantity": {
             "type": "number"
@@ -3059,7 +3792,7 @@
           "slug",
           "status",
           "sku",
-          "price",
+          "priceMinor",
           "stockQuantity",
           "reservedQuantity",
           "availableQuantity",
@@ -3114,15 +3847,16 @@
             "type": "string",
             "example": "TSHIRT-BLK-M"
           },
-          "price": {
-            "type": "string",
-            "example": "2500.00",
-            "pattern": "^\\d+(?:\\.\\d{1,2})?$"
+          "priceMinor": {
+            "type": "number",
+            "example": 250000,
+            "minimum": 0
           },
-          "compareAtPrice": {
-            "type": "string",
-            "example": "3000.00",
-            "pattern": "^\\d+(?:\\.\\d{1,2})?$"
+          "compareAtPriceMinor": {
+            "type": "number",
+            "example": 300000,
+            "minimum": 0,
+            "nullable": true
           },
           "initialStock": {
             "type": "number",
@@ -3149,36 +3883,10 @@
         "required": [
           "name",
           "sku",
-          "price",
+          "priceMinor",
           "initialStock",
           "lowStockThreshold",
           "status"
-        ]
-      },
-      "InventoryAdjustmentDto": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "manual_increase",
-              "manual_decrease"
-            ]
-          },
-          "quantity": {
-            "type": "number",
-            "minimum": 1,
-            "maximum": 1000000
-          },
-          "reason": {
-            "type": "string",
-            "example": "New supplier stock received."
-          }
-        },
-        "required": [
-          "type",
-          "quantity",
-          "reason"
         ]
       },
       "CategoryResponseDto": {
@@ -4032,6 +4740,553 @@
             "default": true
           }
         }
+      },
+      "ProductImageResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "variantId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "publicUrl": {
+            "type": "string"
+          },
+          "originalFilename": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "number"
+          },
+          "width": {
+            "type": "number"
+          },
+          "height": {
+            "type": "number"
+          },
+          "altText": {
+            "type": "string",
+            "nullable": true
+          },
+          "position": {
+            "type": "number"
+          },
+          "isPrimary": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "productId",
+          "publicUrl",
+          "originalFilename",
+          "mimeType",
+          "sizeBytes",
+          "width",
+          "height",
+          "position",
+          "isPrimary",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ProductImageListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductImageResponseDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "UploadProductImageDto": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary"
+          }
+        },
+        "required": [
+          "file"
+        ]
+      },
+      "UpdateProductImageDto": {
+        "type": "object",
+        "properties": {
+          "altText": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 250
+          },
+          "variantId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        }
+      },
+      "ReorderProductImagesDto": {
+        "type": "object",
+        "properties": {
+          "imageIds": {
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "imageIds"
+        ]
+      },
+      "ProductImageMessageDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "InventoryItemResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "variantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "variantTitle": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "stockQuantity": {
+            "type": "number"
+          },
+          "reservedQuantity": {
+            "type": "number"
+          },
+          "availableQuantity": {
+            "type": "number"
+          },
+          "lowStockThreshold": {
+            "type": "number"
+          },
+          "stockStatus": {
+            "type": "string",
+            "enum": [
+              "in_stock",
+              "low_stock",
+              "out_of_stock"
+            ]
+          },
+          "isAvailable": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "productId",
+          "productName",
+          "variantId",
+          "variantTitle",
+          "sku",
+          "stockQuantity",
+          "reservedQuantity",
+          "availableQuantity",
+          "lowStockThreshold",
+          "stockStatus",
+          "isAvailable",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "InventoryListResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "default": 1,
+            "minimum": 1
+          },
+          "pageSize": {
+            "type": "number",
+            "default": 20,
+            "minimum": 1,
+            "maximum": 100
+          },
+          "search": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryItemResponseDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "totalPages"
+        ]
+      },
+      "ProductInventoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryItemResponseDto"
+            }
+          }
+        },
+        "required": [
+          "productId",
+          "items"
+        ]
+      },
+      "InventoryMovementResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "movementType": {
+            "type": "string",
+            "enum": [
+              "initial_stock",
+              "purchase",
+              "return",
+              "order_cancelled",
+              "damaged",
+              "manual_increase",
+              "manual_decrease",
+              "set_quantity",
+              "reservation",
+              "reservation_release",
+              "reservation_expiry",
+              "sale",
+              "cancellation_restore",
+              "return_restore",
+              "correction"
+            ]
+          },
+          "quantityDelta": {
+            "type": "number"
+          },
+          "stockBefore": {
+            "type": "number"
+          },
+          "stockAfter": {
+            "type": "number"
+          },
+          "reservedBefore": {
+            "type": "number"
+          },
+          "reservedAfter": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "referenceType": {
+            "type": "string",
+            "nullable": true
+          },
+          "referenceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "actorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "movementType",
+          "quantityDelta",
+          "stockBefore",
+          "stockAfter",
+          "reservedBefore",
+          "reservedAfter",
+          "metadata",
+          "createdAt"
+        ]
+      },
+      "InventoryMovementListResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "default": 1,
+            "minimum": 1
+          },
+          "pageSize": {
+            "type": "number",
+            "default": 20,
+            "minimum": 1,
+            "maximum": 100
+          },
+          "search": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryMovementResponseDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "totalPages"
+        ]
+      },
+      "InventoryAdjustmentRequestDto": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "increase",
+              "decrease",
+              "set"
+            ]
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 500
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 80
+          }
+        },
+        "required": [
+          "operation",
+          "quantity",
+          "reason"
+        ]
+      },
+      "UpdateLowStockThresholdDto": {
+        "type": "object",
+        "properties": {
+          "lowStockThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 500
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 80
+          }
+        },
+        "required": [
+          "lowStockThreshold",
+          "reason"
+        ]
+      },
+      "ReserveInventoryDto": {
+        "type": "object",
+        "properties": {
+          "quantity": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 1000000
+          },
+          "referenceType": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "referenceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 80
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "quantity",
+          "referenceType",
+          "referenceId",
+          "idempotencyKey",
+          "expiresAt"
+        ]
+      },
+      "InventoryReservationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "inventoryItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "converted",
+              "released",
+              "expired",
+              "cancelled"
+            ]
+          },
+          "referenceType": {
+            "type": "string"
+          },
+          "referenceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "releasedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "inventoryItemId",
+          "quantity",
+          "status",
+          "referenceType",
+          "referenceId",
+          "expiresAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "InventoryReservationOperationResponseDto": {
+        "type": "object",
+        "properties": {
+          "inventory": {
+            "$ref": "#/components/schemas/InventoryItemResponseDto"
+          },
+          "reservation": {
+            "$ref": "#/components/schemas/InventoryReservationResponseDto"
+          }
+        },
+        "required": [
+          "inventory",
+          "reservation"
+        ]
       },
       "StoreSocialLinksDto": {
         "type": "object",
