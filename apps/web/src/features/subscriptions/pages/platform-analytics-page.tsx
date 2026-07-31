@@ -1,0 +1,5 @@
+"use client";
+import { Alert,Grid,LinearProgress,Stack } from "@mui/material";
+import { PageHeader,SummaryCard } from "@brandcanvas/ui";
+import { usePlatformSubscriptionAnalytics } from "@brandcanvas/contracts";
+export function PlatformAnalyticsPage(){const q=usePlatformSubscriptionAnalytics();if(q.isError)return <Alert severity="error">Unable to load platform analytics.</Alert>;if(q.isPending)return <LinearProgress/>;const d=q.data;const cards=[{label:"Stores",value:d.totalStores,shortLabel:"TS"},{label:"Active stores",value:d.activeStores,shortLabel:"AS"},{label:"Suspended stores",value:d.suspendedStores,shortLabel:"SS"},{label:"Orders",value:d.totalOrders,shortLabel:"OR"},{label:"GMV",value:(d.gmvMinor/100).toFixed(2),shortLabel:"GV"},{label:"Active subscriptions",value:d.activeSubscriptions,shortLabel:"SU"}];return <Stack spacing={3}><PageHeader title="Platform analytics" description="BrandCanvas stores, subscriptions and GMV."/><Grid container spacing={2}>{cards.map(c=><Grid key={c.label} size={{xs:12,md:4}}><SummaryCard {...c}/></Grid>)}</Grid></Stack>}

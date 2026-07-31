@@ -57,6 +57,13 @@
       "when": 1784061784930,
       "tag": "0007_lean_santa_claus",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784133731737,
+      "tag": "0008_thankful_avengers",
+      "breakpoints": true
     }
   ]
 }

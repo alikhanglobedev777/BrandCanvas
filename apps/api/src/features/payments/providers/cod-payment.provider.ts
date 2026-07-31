@@ -1,0 +1,1 @@
+import { Injectable } from "@nestjs/common";import type { PaymentProvider } from "./payment-provider";@Injectable()export class CodPaymentProvider implements PaymentProvider{readonly code="cod";async create(){return{status:"pending" as const}}async refund(){return{status:"refunded" as const}}}

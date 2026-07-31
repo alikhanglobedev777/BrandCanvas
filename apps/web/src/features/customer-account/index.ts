@@ -1,0 +1,1 @@
+export * from "./pages/customer-login-page";export * from "./pages/customer-register-page";export * from "./pages/customer-account-page";export * from "./pages/customer-profile-page";export * from "./pages/customer-addresses-page";export * from "./pages/customer-orders-page";export * from "./pages/customer-order-details-page";export * from "./pages/customer-password-pages";

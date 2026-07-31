@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes: [brandcanvas_postgres:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes: [brandcanvas_redis:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+  api:
+    build: { context: ., dockerfile: apps/api/Dockerfile }
+    restart: unless-stopped
+    env_file: .env.production
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    ports: ["4000:4000"]
+    volumes: [brandcanvas_assets:/app/.brandcanvas/store-assets]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/api/v1/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+  web:
+    build: { context: ., dockerfile: apps/web/Dockerfile }
+    restart: unless-stopped
+    env_file: .env.production
+    depends_on: [api]
+    ports: ["3000:3000"]
+  worker:
+    build: { context: ., dockerfile: apps/worker/Dockerfile }
+    restart: unless-stopped
+    env_file: .env.production
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+volumes:
+  brandcanvas_postgres:
+  brandcanvas_redis:
+  brandcanvas_assets:

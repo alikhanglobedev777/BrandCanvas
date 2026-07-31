@@ -1,0 +1,5 @@
+"use client";
+import { Alert, Grid, LinearProgress, Stack } from "@mui/material";
+import { PageHeader, SummaryCard } from "@brandcanvas/ui";
+import { useSellerSubscriptionAnalytics } from "@brandcanvas/contracts";
+export function SellerAnalyticsPage(){const q=useSellerSubscriptionAnalytics();if(q.isError)return <Alert severity="error">Unable to load analytics.</Alert>;if(q.isPending)return <LinearProgress/>;const d=q.data;const cards=[{label:"Revenue",value:(d.revenueMinor/100).toFixed(2),shortLabel:"RV"},{label:"Orders",value:d.orderCount,shortLabel:"OR"},{label:"Average order",value:(d.averageOrderValueMinor/100).toFixed(2),shortLabel:"AO"},{label:"Products",value:d.productCount,shortLabel:"PR"},{label:"Low stock",value:d.lowStockCount,shortLabel:"LS"}];return <Stack spacing={3}><PageHeader title="Store analytics" description="A live overview calculated from your orders and catalog."/><Grid container spacing={2}>{cards.map(c=><Grid key={c.label} size={{xs:12,md:4}}><SummaryCard {...c}/></Grid>)}</Grid></Stack>}
