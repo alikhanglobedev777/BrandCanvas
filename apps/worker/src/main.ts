@@ -1,21 +1,14 @@
 import { config } from "dotenv";
-
+import { Queue, Worker } from "bullmq";
+import IORedis from "ioredis";
+import { and, eq, isNull, lte, sql } from "drizzle-orm";
+import { backgroundJobExecutions, checkoutSessions, createDatabase, inventoryItems, inventoryMovements, inventoryReservations, notificationOutbox, notifications, storeSubscriptions } from "@brandcanvas/database";
 config({ path: "../../.env" });
-
-const workerEnabled = process.env.WORKER_ENABLED === "true";
-
-if (!workerEnabled) {
-  console.log("BrandCanvas worker bootstrap is ready. Set WORKER_ENABLED=true after adding queue processors.");
-
-  const heartbeat = setInterval(() => undefined, 60_000);
-
-  const shutdown = () => {
-    clearInterval(heartbeat);
-    process.exit(0);
-  };
-
-  process.on("SIGINT", shutdown);
-  process.on("SIGTERM", shutdown);
-} else {
-  console.log("WORKER_ENABLED=true, but no production queue processor has been registered yet.");
-}
+const enabled=process.env.WORKER_ENABLED==="true";
+if(!enabled){console.log("BrandCanvas worker disabled. Set WORKER_ENABLED=true to process background jobs.");const timer=setInterval(()=>undefined,60000);const stop=()=>{clearInterval(timer);process.exit(0)};process.on("SIGINT",stop);process.on("SIGTERM",stop);}else{void start();}
+async function start(){const redisUrl=required("REDIS_URL"),databaseUrl=required("DATABASE_URL");const connection=new IORedis(redisUrl,{maxRetriesPerRequest:null});const {db,close}=createDatabase(databaseUrl);const maintenance=new Queue("brandcanvas-maintenance",{connection});await maintenance.upsertJobScheduler("hourly-maintenance",{every:3600000},{name:"maintenance",data:{}});const worker=new Worker("brandcanvas-maintenance",async job=>{const key=`${job.name}:${job.id}:${job.attemptsMade+1}`;const inserted=await db.insert(backgroundJobExecutions).values({jobName:job.name,idempotencyKey:key,status:"started",attempt:job.attemptsMade+1}).onConflictDoNothing().returning({id:backgroundJobExecutions.id});if(!inserted[0])return;try{await expireReservations(db);await expireCheckouts(db);await expireSubscriptions(db);await deliverOutbox(db);await db.update(backgroundJobExecutions).set({status:"succeeded",finishedAt:new Date()}).where(eq(backgroundJobExecutions.id,inserted[0].id));}catch(error){await db.update(backgroundJobExecutions).set({status:"failed",finishedAt:new Date(),error:error instanceof Error?error.message:"Unknown worker failure"}).where(eq(backgroundJobExecutions.id,inserted[0].id));throw error;}},{connection,concurrency:2});worker.on("failed",(job,error)=>console.error("Background job failed",{jobId:job?.id,error:error.message}));const stop=async()=>{await worker.close();await maintenance.close();await connection.quit();await close();process.exit(0)};process.on("SIGINT",()=>void stop());process.on("SIGTERM",()=>void stop());console.log("BrandCanvas worker started.");}
+async function expireReservations(db:ReturnType<typeof createDatabase>["db"]){const rows=await db.select().from(inventoryReservations).where(and(eq(inventoryReservations.status,"active"),lte(inventoryReservations.expiresAt,new Date()))).limit(200);for(const candidate of rows){await db.transaction(async tx=>{const[reservation]=await tx.select().from(inventoryReservations).where(eq(inventoryReservations.id,candidate.id)).limit(1).for("update");if(!reservation||reservation.status!=="active"||reservation.expiresAt>new Date())return;const[item]=await tx.select().from(inventoryItems).where(eq(inventoryItems.id,reservation.inventoryItemId)).limit(1).for("update");if(!item)return;const after=Math.max(0,item.reservedQuantity-reservation.quantity);await tx.update(inventoryItems).set({reservedQuantity:after,updatedAt:new Date()}).where(eq(inventoryItems.id,item.id));await tx.update(inventoryReservations).set({status:"expired",releasedAt:new Date(),updatedAt:new Date()}).where(eq(inventoryReservations.id,reservation.id));await tx.insert(inventoryMovements).values({storeId:item.storeId,inventoryItemId:item.id,productId:item.productId,variantId:item.variantId,movementType:"reservation_expiry",quantityDelta:0,stockBefore:item.stockQuantity,stockAfter:item.stockQuantity,reservedBefore:item.reservedQuantity,reservedAfter:after,reason:"Background reservation expiry",referenceType:"reservation",referenceId:reservation.id,metadata:{worker:true}});});}}
+async function expireCheckouts(db:ReturnType<typeof createDatabase>["db"]){await db.update(checkoutSessions).set({status:"expired",updatedAt:new Date()}).where(and(sql`${checkoutSessions.status} in ('active','ready')`,lte(checkoutSessions.expiresAt,new Date())))}
+async function expireSubscriptions(db:ReturnType<typeof createDatabase>["db"]){await db.update(storeSubscriptions).set({status:"expired",updatedAt:new Date()}).where(and(sql`${storeSubscriptions.status} in ('trial','active','past_due')`,lte(storeSubscriptions.endsAt,new Date())))}
+async function deliverOutbox(db:ReturnType<typeof createDatabase>["db"]){const rows=await db.select().from(notificationOutbox).where(and(isNull(notificationOutbox.processedAt),lte(notificationOutbox.availableAt,new Date()))).limit(100);for(const row of rows){await db.transaction(async tx=>{await tx.update(notificationOutbox).set({processedAt:new Date(),attempts:row.attempts+1}).where(eq(notificationOutbox.id,row.id));await tx.update(notifications).set({status:"sent",sentAt:new Date(),updatedAt:new Date()}).where(eq(notifications.id,row.notificationId));});}}
+function required(name:string){const value=process.env[name];if(!value)throw new Error(`${name} is required when the worker is enabled.`);return value}

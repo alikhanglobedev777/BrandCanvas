@@ -10,8 +10,6 @@ coverage/
 *.tsbuildinfo
 
 # Environment files
-.env
-.env.*
 !.env.example
 
 # Logs
@@ -19,7 +17,6 @@ coverage/
 pnpm-debug.log*
 
 # Editors and OS
-.vscode/
 .idea/
 .DS_Store
 Thumbs.db
@@ -29,3 +26,4 @@ Thumbs.db
 
 # Local application data
 .brandcanvas/
+config.bat

@@ -32,7 +32,9 @@
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
     "sharp": "^0.34.5",
-    "zod": "4.4.3"
+    "zod": "4.4.3",
+    "@fastify/helmet": "13.0.2",
+    "@fastify/rate-limit": "10.3.0"
   },
   "devDependencies": {
     "@nestjs/cli": "11.0.24",

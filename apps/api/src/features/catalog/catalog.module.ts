@@ -22,8 +22,10 @@ import {
   ProductImageRepository,
 } from "./repositories";
 import { CatalogPermissionGuard } from "./guards";
+import { SubscriptionsModule } from "../subscriptions";
 
 @Module({
+  imports: [SubscriptionsModule],
   controllers: [
     CatalogController,
     CatalogManagementController,

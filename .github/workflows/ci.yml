@@ -1,0 +1,56 @@
+name: BrandCanvas CI
+on:
+  push:
+  pull_request:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env: { POSTGRES_DB: brandcanvas, POSTGRES_USER: brandcanvas, POSTGRES_PASSWORD: brandcanvas_ci }
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U brandcanvas -d brandcanvas" --health-interval 10s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:8-alpine
+        ports: [6379:6379]
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://brandcanvas:brandcanvas_ci@localhost:5432/brandcanvas
+      REDIS_URL: redis://localhost:6379
+      WEB_ORIGIN: http://localhost:3000
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+      PLATFORM_DOMAIN: brandcanvas.test
+      COOKIE_SECRET: ci-cookie-secret-at-least-32-characters
+      JWT_ACTIVE_KID: ci
+      JWT_KEY_RING_JSON: '{"ci":"ci-jwt-secret-at-least-thirty-two-characters"}'
+      SUPER_ADMIN_EMAIL: admin@brandcanvas.test
+      SUPER_ADMIN_PASSWORD: BrandCanvasCiPassword123!
+      STORE_ASSET_PUBLIC_BASE_URL: http://localhost:4000/uploads
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10.0.0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:migrate
+      - run: pnpm contracts:check
+      - run: pnpm rules:check
+      - run: pnpm test
+      - run: pnpm typecheck
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm dev > /tmp/brandcanvas.log 2>&1 &
+      - run: pnpm exec wait-on http://localhost:3000 http://localhost:4000/api/v1/health
+      - run: pnpm e2e
+      - if: failure()
+        run: cat /tmp/brandcanvas.log
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f apps/api/Dockerfile -t brandcanvas-api .
+      - run: docker build -f apps/web/Dockerfile -t brandcanvas-web .
+      - run: docker build -f apps/worker/Dockerfile -t brandcanvas-worker .

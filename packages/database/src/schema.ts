@@ -30,6 +30,13 @@ export const platformRoleEnum = pgEnum("platform_role", [
   "user",
 ]);
 export const userStatusEnum = pgEnum("user_status", ["active", "blocked"]);
+export const customerStatusEnum = pgEnum("customer_status", ["active", "blocked"]);
+export const customerTokenTypeEnum = pgEnum("customer_token_type", ["email_verification", "password_reset"]);
+export const customDomainVerificationStatusEnum = pgEnum("custom_domain_verification_status", [
+  "pending",
+  "verified",
+  "failed",
+]);
 export const storeStatusEnum = pgEnum("store_status", [
   "pending",
   "active",
@@ -59,6 +66,9 @@ export const collectionStatusEnum = pgEnum("collection_status", [
   "draft",
   "published",
 ]);
+export const cartStatusEnum = pgEnum("cart_status", ["active", "converted", "abandoned", "expired"]);
+export const checkoutStatusEnum = pgEnum("checkout_status", ["active", "ready", "completed", "cancelled", "expired"]);
+export const addressTypeEnum = pgEnum("address_type", ["shipping", "billing"]);
 export const orderStatusEnum = pgEnum("order_status", [
   "pending_payment",
   "pending_confirmation",
@@ -69,7 +79,21 @@ export const orderStatusEnum = pgEnum("order_status", [
   "delivered",
   "cancelled",
   "refunded",
+  "returned",
 ]);
+export const subscriptionStatusEnum = pgEnum("subscription_status", ["trial", "active", "past_due", "suspended", "expired", "cancelled"]);
+export const billingIntervalEnum = pgEnum("billing_interval", ["monthly", "yearly"]);
+export const notificationAudienceEnum = pgEnum("notification_audience", ["seller", "customer"]);
+export const notificationStatusEnum = pgEnum("notification_status", ["pending", "sent", "failed", "read"]);
+export const backgroundJobStatusEnum = pgEnum("background_job_status", ["started", "succeeded", "failed"]);
+export const conversationStatusEnum = pgEnum("conversation_status", ["open", "closed"]);
+export const messageSenderTypeEnum = pgEnum("message_sender_type", ["customer", "seller"]);
+export const discountTypeEnum = pgEnum("discount_type", ["percentage", "fixed_amount", "free_shipping"]);
+export const discountStatusEnum = pgEnum("discount_status", ["draft", "active", "inactive"]);
+export const paymentProviderEnum = pgEnum("payment_provider", ["cod", "external"]);
+export const paymentAttemptStatusEnum = pgEnum("payment_attempt_status", ["created", "pending", "succeeded", "failed", "cancelled"]);
+export const paymentStatusEnum = pgEnum("payment_status", ["pending", "authorized", "paid", "failed", "cancelled", "refunded", "partially_refunded"]);
+export const fulfillmentStatusEnum = pgEnum("fulfillment_status", ["unfulfilled", "processing", "fulfilled", "returned"]);
 export const inventoryMovementTypeEnum = pgEnum("inventory_movement_type", [
   "initial_stock",
   "purchase",
@@ -148,6 +172,8 @@ export const stores = pgTable(
     customDomain: varchar("custom_domain", { length: 253 }),
     logoUrl: text("logo_url"),
     status: storeStatusEnum("status").default("pending").notNull(),
+    storefrontEnabled: boolean("storefront_enabled").default(true).notNull(),
+    storefrontPublishedAt: timestamp("storefront_published_at", { withTimezone: true }),
     theme: jsonb("theme")
       .$type<{
         primaryColor: string;
@@ -175,6 +201,41 @@ export const stores = pgTable(
     uniqueIndex("stores_custom_domain_unique").on(table.customDomain),
     index("stores_status_idx").on(table.status),
     index("stores_owner_idx").on(table.ownerId),
+  ],
+);
+
+
+export const storeDomains = pgTable(
+  "store_domains",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    hostname: varchar("hostname", { length: 253 }).notNull(),
+    normalizedHostname: varchar("normalized_hostname", { length: 253 }).notNull(),
+    verificationStatus: customDomainVerificationStatusEnum("verification_status")
+      .default("pending")
+      .notNull(),
+    verificationTokenHash: text("verification_token_hash"),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
+    isPrimary: boolean("is_primary").default(false).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("store_domains_hostname_unique").on(table.normalizedHostname),
+    uniqueIndex("store_domains_store_id_unique").on(table.storeId, table.id),
+    uniqueIndex("store_domains_store_primary_unique")
+      .on(table.storeId)
+      .where(sql`${table.isPrimary} = true`),
+    index("store_domains_store_status_idx").on(
+      table.storeId,
+      table.verificationStatus,
+    ),
+    check(
+      "store_domains_hostname_format",
+      sql`${table.normalizedHostname} ~ '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$'`,
+    ),
   ],
 );
 
@@ -940,6 +1001,113 @@ export const inventoryReservations = pgTable(
   ],
 );
 
+
+export const carts = pgTable(
+  "carts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }),
+    customerId: uuid("customer_id"),
+    guestTokenHash: varchar("guest_token_hash", { length: 64 }),
+    status: cartStatusEnum("status").default("active").notNull(),
+    currency: varchar("currency", { length: 3 }).default("PKR").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("carts_store_id_unique").on(table.storeId, table.id),
+    uniqueIndex("carts_store_guest_active_unique")
+      .on(table.storeId, table.guestTokenHash)
+      .where(sql`${table.status} = 'active' and ${table.guestTokenHash} is not null`),
+    uniqueIndex("carts_store_customer_active_unique")
+      .on(table.storeId, table.customerId)
+      .where(sql`${table.status} = 'active' and ${table.customerId} is not null`),
+    index("carts_expiry_idx").on(table.status, table.expiresAt),
+    check("carts_owner_present", sql`${table.customerId} is not null or ${table.guestTokenHash} is not null`),
+  ],
+);
+
+export const cartItems = pgTable(
+  "cart_items",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }),
+    cartId: uuid("cart_id").notNull(),
+    productId: uuid("product_id").notNull(),
+    variantId: uuid("variant_id").notNull(),
+    quantity: integer("quantity").notNull(),
+    unitPriceMinor: integer("unit_price_minor").notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("cart_items_store_id_unique").on(table.storeId, table.id),
+    uniqueIndex("cart_items_cart_variant_unique").on(table.cartId, table.variantId),
+    index("cart_items_cart_idx").on(table.cartId),
+    check("cart_items_quantity_positive", sql`${table.quantity} > 0 and ${table.quantity} <= 99`),
+    check("cart_items_price_nonnegative", sql`${table.unitPriceMinor} >= 0`),
+    foreignKey({ columns: [table.storeId, table.cartId], foreignColumns: [carts.storeId, carts.id], name: "cart_items_store_cart_fk" }).onDelete("cascade"),
+    foreignKey({ columns: [table.storeId, table.productId, table.variantId], foreignColumns: [productVariants.storeId, productVariants.productId, productVariants.id], name: "cart_items_store_variant_fk" }).onDelete("restrict"),
+  ],
+);
+
+
+export const checkoutSessions = pgTable(
+  "checkout_sessions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "restrict" }),
+    cartId: uuid("cart_id").notNull(),
+    customerId: uuid("customer_id"),
+    guestTokenHash: varchar("guest_token_hash", { length: 64 }),
+    guestEmail: varchar("guest_email", { length: 254 }),
+    status: checkoutStatusEnum("status").default("active").notNull(),
+    currency: varchar("currency", { length: 3 }).notNull(),
+    subtotalMinor: integer("subtotal_minor").notNull(),
+    discountMinor: integer("discount_minor").default(0).notNull(),
+    shippingMinor: integer("shipping_minor").default(0).notNull(),
+    taxMinor: integer("tax_minor").default(0).notNull(),
+    totalMinor: integer("total_minor").notNull(),
+    shippingMethodCode: varchar("shipping_method_code", { length: 80 }),
+    discountId: uuid("discount_id"),
+    couponId: uuid("coupon_id"),
+    couponCode: varchar("coupon_code", { length: 80 }),
+    idempotencyKey: varchar("idempotency_key", { length: 120 }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("checkout_sessions_store_id_unique").on(table.storeId, table.id),
+    uniqueIndex("checkout_sessions_store_idempotency_unique").on(table.storeId, table.idempotencyKey),
+    index("checkout_sessions_expiry_idx").on(table.status, table.expiresAt),
+    check("checkout_sessions_totals_nonnegative", sql`${table.subtotalMinor} >= 0 and ${table.discountMinor} >= 0 and ${table.shippingMinor} >= 0 and ${table.taxMinor} >= 0 and ${table.totalMinor} >= 0`),
+    check("checkout_sessions_owner_present", sql`${table.customerId} is not null or ${table.guestTokenHash} is not null`),
+    foreignKey({ columns: [table.storeId, table.cartId], foreignColumns: [carts.storeId, carts.id], name: "checkout_sessions_store_cart_fk" }).onDelete("restrict"),
+  ],
+);
+
+export const checkoutAddresses = pgTable(
+  "checkout_addresses",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    checkoutSessionId: uuid("checkout_session_id").notNull().references(() => checkoutSessions.id, { onDelete: "cascade" }),
+    type: addressTypeEnum("type").notNull(),
+    firstName: varchar("first_name", { length: 80 }).notNull(),
+    lastName: varchar("last_name", { length: 80 }).notNull(),
+    phone: varchar("phone", { length: 32 }).notNull(),
+    addressLine1: varchar("address_line_1", { length: 200 }).notNull(),
+    addressLine2: varchar("address_line_2", { length: 200 }),
+    city: varchar("city", { length: 100 }).notNull(),
+    region: varchar("region", { length: 100 }).notNull(),
+    postalCode: varchar("postal_code", { length: 24 }),
+    countryCode: varchar("country_code", { length: 2 }).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("checkout_addresses_session_type_unique").on(table.checkoutSessionId, table.type),
+    index("checkout_addresses_session_idx").on(table.checkoutSessionId),
+  ],
+);
+
 export const orders = pgTable(
   "orders",
   {
@@ -948,8 +1116,14 @@ export const orders = pgTable(
       .notNull()
       .references(() => stores.id, { onDelete: "restrict" }),
     orderNumber: varchar("order_number", { length: 50 }).notNull(),
+    customerId: uuid("customer_id"),
     customerEmail: varchar("customer_email", { length: 254 }).notNull(),
-    status: orderStatusEnum("status").default("pending_payment").notNull(),
+    customerPhone: varchar("customer_phone", { length: 32 }),
+    publicReference: varchar("public_reference", { length: 64 }).notNull(),
+    idempotencyKey: varchar("idempotency_key", { length: 120 }).notNull(),
+    status: orderStatusEnum("status").default("pending_confirmation").notNull(),
+    paymentStatus: paymentStatusEnum("payment_status").default("pending").notNull(),
+    fulfillmentStatus: fulfillmentStatusEnum("fulfillment_status").default("unfulfilled").notNull(),
     currency: varchar("currency", { length: 3 }).default("PKR").notNull(),
     subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull(),
     discountTotal: numeric("discount_total", { precision: 12, scale: 2 })
@@ -959,6 +1133,14 @@ export const orders = pgTable(
       .default("0")
       .notNull(),
     grandTotal: numeric("grand_total", { precision: 12, scale: 2 }).notNull(),
+    subtotalMinor: integer("subtotal_minor").notNull(),
+    discountMinor: integer("discount_minor").default(0).notNull(),
+    shippingMinor: integer("shipping_minor").default(0).notNull(),
+    taxMinor: integer("tax_minor").default(0).notNull(),
+    totalMinor: integer("total_minor").notNull(),
+    notes: text("notes"),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
     ...timestamps,
   },
   (table) => [
@@ -966,6 +1148,8 @@ export const orders = pgTable(
       table.storeId,
       table.orderNumber,
     ),
+    uniqueIndex("orders_public_reference_unique").on(table.publicReference),
+    uniqueIndex("orders_store_idempotency_unique").on(table.storeId, table.idempotencyKey),
     index("orders_store_status_idx").on(table.storeId, table.status),
     index("orders_customer_email_idx").on(table.customerEmail),
   ],
@@ -978,6 +1162,7 @@ export const orderItems = pgTable(
     orderId: uuid("order_id")
       .notNull()
       .references(() => orders.id, { onDelete: "cascade" }),
+    productId: uuid("product_id").references(() => products.id, { onDelete: "set null" }),
     variantId: uuid("variant_id").references(() => productVariants.id, {
       onDelete: "set null",
     }),
@@ -987,6 +1172,8 @@ export const orderItems = pgTable(
     unitPrice: numeric("unit_price", { precision: 12, scale: 2 }).notNull(),
     quantity: integer("quantity").notNull(),
     lineTotal: numeric("line_total", { precision: 12, scale: 2 }).notNull(),
+    unitPriceMinor: integer("unit_price_minor").notNull(),
+    lineTotalMinor: integer("line_total_minor").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -994,6 +1181,316 @@ export const orderItems = pgTable(
   (table) => [
     index("order_items_order_idx").on(table.orderId),
     check("order_items_quantity_positive", sql`${table.quantity} > 0`),
+  ],
+);
+
+
+export const orderAddresses = pgTable(
+  "order_addresses",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+    type: addressTypeEnum("type").notNull(),
+    firstName: varchar("first_name", { length: 80 }).notNull(),
+    lastName: varchar("last_name", { length: 80 }).notNull(),
+    phone: varchar("phone", { length: 32 }).notNull(),
+    addressLine1: varchar("address_line_1", { length: 200 }).notNull(),
+    addressLine2: varchar("address_line_2", { length: 200 }),
+    city: varchar("city", { length: 100 }).notNull(),
+    region: varchar("region", { length: 100 }).notNull(),
+    postalCode: varchar("postal_code", { length: 24 }),
+    countryCode: varchar("country_code", { length: 2 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [uniqueIndex("order_addresses_order_type_unique").on(table.orderId, table.type)],
+);
+export const orderStatusHistory = pgTable(
+  "order_status_history",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+    fromStatus: orderStatusEnum("from_status"),
+    toStatus: orderStatusEnum("to_status").notNull(),
+    actorUserId: uuid("actor_user_id").references(() => users.id, { onDelete: "set null" }),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index("order_status_history_order_idx").on(table.orderId, table.createdAt)],
+);
+export const orderFulfillments = pgTable(
+  "order_fulfillments",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+    carrier: varchar("carrier", { length: 100 }),
+    trackingNumber: varchar("tracking_number", { length: 150 }),
+    trackingUrl: text("tracking_url"),
+    shippedAt: timestamp("shipped_at", { withTimezone: true }),
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => [index("order_fulfillments_order_idx").on(table.orderId)],
+);
+
+
+export const customers = pgTable(
+  "customers",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }),
+    email: varchar("email", { length: 254 }).notNull(),
+    passwordHash: text("password_hash").notNull(),
+    firstName: varchar("first_name", { length: 80 }).notNull(),
+    lastName: varchar("last_name", { length: 80 }).notNull(),
+    phone: varchar("phone", { length: 32 }),
+    status: customerStatusEnum("status").default("active").notNull(),
+    emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
+    marketingConsent: boolean("marketing_consent").default(false).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("customers_store_email_unique").on(table.storeId, table.email),
+    uniqueIndex("customers_store_id_unique").on(table.storeId, table.id),
+    index("customers_store_status_idx").on(table.storeId, table.status),
+  ],
+);
+
+
+export const discounts = pgTable(
+  "discounts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 150 }).notNull(),
+    type: discountTypeEnum("type").notNull(),
+    value: integer("value").default(0).notNull(),
+    status: discountStatusEnum("status").default("draft").notNull(),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    minimumSubtotalMinor: integer("minimum_subtotal_minor").default(0).notNull(),
+    maximumDiscountMinor: integer("maximum_discount_minor"),
+    usageLimit: integer("usage_limit"),
+    usagePerCustomer: integer("usage_per_customer"),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("discounts_store_id_unique").on(table.storeId, table.id),
+    index("discounts_store_status_idx").on(table.storeId, table.status),
+    check("discounts_values_nonnegative", sql`${table.value} >= 0 and ${table.minimumSubtotalMinor} >= 0 and (${table.maximumDiscountMinor} is null or ${table.maximumDiscountMinor} >= 0)`),
+  ],
+);
+export const couponCodes = pgTable(
+  "coupon_codes",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }),
+    discountId: uuid("discount_id").notNull(),
+    code: varchar("code", { length: 80 }).notNull(),
+    normalizedCode: varchar("normalized_code", { length: 80 }).notNull(),
+    usageCount: integer("usage_count").default(0).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("coupon_codes_store_code_unique").on(table.storeId, table.normalizedCode),
+    foreignKey({ columns: [table.storeId, table.discountId], foreignColumns: [discounts.storeId, discounts.id], name: "coupon_codes_store_discount_fk" }).onDelete("cascade"),
+  ],
+);
+export const discountProducts = pgTable("discount_products", { storeId: uuid("store_id").notNull(), discountId: uuid("discount_id").notNull(), productId: uuid("product_id").notNull() }, (table) => [uniqueIndex("discount_products_unique").on(table.storeId, table.discountId, table.productId), foreignKey({columns:[table.storeId,table.discountId],foreignColumns:[discounts.storeId,discounts.id],name:"discount_products_store_discount_fk"}).onDelete("cascade"), foreignKey({columns:[table.storeId,table.productId],foreignColumns:[products.storeId,products.id],name:"discount_products_store_product_fk"}).onDelete("cascade")]);
+export const discountCategories = pgTable("discount_categories", { storeId: uuid("store_id").notNull(), discountId: uuid("discount_id").notNull(), categoryId: uuid("category_id").notNull() }, (table) => [uniqueIndex("discount_categories_unique").on(table.storeId, table.discountId, table.categoryId), foreignKey({columns:[table.storeId,table.discountId],foreignColumns:[discounts.storeId,discounts.id],name:"discount_categories_store_discount_fk"}).onDelete("cascade"), foreignKey({columns:[table.storeId,table.categoryId],foreignColumns:[productCategories.storeId,productCategories.id],name:"discount_categories_store_category_fk"}).onDelete("cascade")]);
+export const discountCollections = pgTable("discount_collections", { storeId: uuid("store_id").notNull(), discountId: uuid("discount_id").notNull(), collectionId: uuid("collection_id").notNull() }, (table) => [uniqueIndex("discount_collections_unique").on(table.storeId, table.discountId, table.collectionId), foreignKey({columns:[table.storeId,table.discountId],foreignColumns:[discounts.storeId,discounts.id],name:"discount_collections_store_discount_fk"}).onDelete("cascade"), foreignKey({columns:[table.storeId,table.collectionId],foreignColumns:[collections.storeId,collections.id],name:"discount_collections_store_collection_fk"}).onDelete("cascade")]);
+export const discountRedemptions = pgTable(
+  "discount_redemptions",
+  { id: uuid("id").defaultRandom().primaryKey(), storeId: uuid("store_id").notNull(), discountId: uuid("discount_id").notNull(), couponId: uuid("coupon_id"), orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }), customerId: uuid("customer_id"), customerEmail: varchar("customer_email", { length: 254 }), amountMinor: integer("amount_minor").notNull(), reversedAt: timestamp("reversed_at", { withTimezone: true }), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull() },
+  (table) => [uniqueIndex("discount_redemptions_order_discount_unique").on(table.orderId, table.discountId), index("discount_redemptions_discount_idx").on(table.discountId), foreignKey({columns:[table.storeId,table.discountId],foreignColumns:[discounts.storeId,discounts.id],name:"discount_redemptions_store_discount_fk"}).onDelete("restrict")],
+);
+export const shippingZones = pgTable(
+  "shipping_zones",
+  { id: uuid("id").defaultRandom().primaryKey(), storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }), name: varchar("name", { length: 120 }).notNull(), countryCodes: text("country_codes").array().default(sql`'{}'::text[]`).notNull(), isActive: boolean("is_active").default(true).notNull(), ...timestamps },
+  (table) => [uniqueIndex("shipping_zones_store_id_unique").on(table.storeId, table.id), uniqueIndex("shipping_zones_store_name_unique").on(table.storeId, table.name)],
+);
+export const shippingMethods = pgTable(
+  "shipping_methods",
+  { id: uuid("id").defaultRandom().primaryKey(), storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }), zoneId: uuid("zone_id").notNull(), code: varchar("code", { length: 80 }).notNull(), name: varchar("name", { length: 120 }).notNull(), description: text("description"), rateMinor: integer("rate_minor").default(0).notNull(), freeAboveMinor: integer("free_above_minor"), estimatedDaysMin: integer("estimated_days_min"), estimatedDaysMax: integer("estimated_days_max"), isActive: boolean("is_active").default(true).notNull(), ...timestamps },
+  (table) => [uniqueIndex("shipping_methods_store_code_unique").on(table.storeId, table.code), uniqueIndex("shipping_methods_store_id_unique").on(table.storeId, table.id), foreignKey({columns:[table.storeId,table.zoneId],foreignColumns:[shippingZones.storeId,shippingZones.id],name:"shipping_methods_store_zone_fk"}).onDelete("cascade"), check("shipping_methods_rate_nonnegative",sql`${table.rateMinor} >= 0`)],
+);
+
+
+export const conversations = pgTable(
+  "conversations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }),
+    customerId: uuid("customer_id").notNull().references(() => customers.id, { onDelete: "cascade" }),
+    orderId: uuid("order_id").references(() => orders.id, { onDelete: "set null" }),
+    subject: varchar("subject", { length: 180 }).notNull(),
+    status: conversationStatusEnum("status").default("open").notNull(),
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true }).defaultNow().notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("conversations_store_id_unique").on(table.storeId, table.id),
+    index("conversations_store_last_message_idx").on(table.storeId, table.lastMessageAt),
+    index("conversations_customer_idx").on(table.customerId, table.lastMessageAt),
+  ],
+);
+export const messages = pgTable(
+  "messages",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    conversationId: uuid("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }),
+    senderType: messageSenderTypeEnum("sender_type").notNull(),
+    senderUserId: uuid("sender_user_id").references(() => users.id, { onDelete: "set null" }),
+    senderCustomerId: uuid("sender_customer_id").references(() => customers.id, { onDelete: "set null" }),
+    body: text("body").notNull(),
+    editedAt: timestamp("edited_at", { withTimezone: true }),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index("messages_conversation_created_idx").on(table.conversationId, table.createdAt), check("messages_sender_valid", sql`(${table.senderType} = 'seller' and ${table.senderUserId} is not null) or (${table.senderType} = 'customer' and ${table.senderCustomerId} is not null)`)],
+);
+export const messageAttachments = pgTable(
+  "message_attachments",
+  { id: uuid("id").defaultRandom().primaryKey(), messageId: uuid("message_id").notNull().references(() => messages.id, { onDelete: "cascade" }), storageProvider: varchar("storage_provider", { length: 32 }).notNull(), storageKey: text("storage_key").notNull(), publicUrl: text("public_url").notNull(), filename: varchar("filename", { length: 255 }).notNull(), mimeType: varchar("mime_type", { length: 100 }).notNull(), sizeBytes: integer("size_bytes").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull() },
+  (table) => [uniqueIndex("message_attachments_storage_unique").on(table.storageProvider, table.storageKey), index("message_attachments_message_idx").on(table.messageId)],
+);
+export const conversationReads = pgTable(
+  "conversation_reads",
+  { id: uuid("id").defaultRandom().primaryKey(), conversationId: uuid("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }), readerType: messageSenderTypeEnum("reader_type").notNull(), userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }), customerId: uuid("customer_id").references(() => customers.id, { onDelete: "cascade" }), lastReadAt: timestamp("last_read_at", { withTimezone: true }).defaultNow().notNull() },
+  (table) => [uniqueIndex("conversation_reads_user_unique").on(table.conversationId, table.userId), uniqueIndex("conversation_reads_customer_unique").on(table.conversationId, table.customerId)],
+);
+
+
+export const storePaymentSettings = pgTable(
+  "store_payment_settings",
+  { storeId: uuid("store_id").primaryKey().references(() => stores.id, { onDelete: "cascade" }), codEnabled: boolean("cod_enabled").default(true).notNull(), onlinePaymentsEnabled: boolean("online_payments_enabled").default(false).notNull(), updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull() },
+);
+export const payments = pgTable(
+  "payments",
+  { id: uuid("id").defaultRandom().primaryKey(), storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "restrict" }), orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "restrict" }), provider: paymentProviderEnum("provider").notNull(), providerReference: varchar("provider_reference", { length: 200 }), status: paymentStatusEnum("status").default("pending").notNull(), currency: varchar("currency", { length: 3 }).notNull(), amountMinor: integer("amount_minor").notNull(), collectedAt: timestamp("collected_at", { withTimezone: true }), cancelledAt: timestamp("cancelled_at", { withTimezone: true }), ...timestamps },
+  (table) => [uniqueIndex("payments_order_unique").on(table.orderId), uniqueIndex("payments_store_id_unique").on(table.storeId, table.id), index("payments_store_status_idx").on(table.storeId, table.status), check("payments_amount_nonnegative", sql`${table.amountMinor} >= 0`)],
+);
+export const paymentAttempts = pgTable(
+  "payment_attempts",
+  { id: uuid("id").defaultRandom().primaryKey(), paymentId: uuid("payment_id").notNull().references(() => payments.id, { onDelete: "cascade" }), idempotencyKey: varchar("idempotency_key", { length: 120 }).notNull(), status: paymentAttemptStatusEnum("status").default("created").notNull(), providerPayload: jsonb("provider_payload").$type<Record<string, unknown>>().default(sql`'{}'::jsonb`).notNull(), errorCode: varchar("error_code", { length: 100 }), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(), updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull() },
+  (table) => [uniqueIndex("payment_attempts_idempotency_unique").on(table.paymentId, table.idempotencyKey), index("payment_attempts_payment_idx").on(table.paymentId)],
+);
+export const paymentEvents = pgTable(
+  "payment_events",
+  { id: uuid("id").defaultRandom().primaryKey(), paymentId: uuid("payment_id").notNull().references(() => payments.id, { onDelete: "cascade" }), type: varchar("type", { length: 80 }).notNull(), payload: jsonb("payload").$type<Record<string, unknown>>().default(sql`'{}'::jsonb`).notNull(), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull() },
+  (table) => [index("payment_events_payment_idx").on(table.paymentId, table.createdAt)],
+);
+export const refunds = pgTable(
+  "refunds",
+  { id: uuid("id").defaultRandom().primaryKey(), paymentId: uuid("payment_id").notNull().references(() => payments.id, { onDelete: "restrict" }), amountMinor: integer("amount_minor").notNull(), reason: text("reason"), status: varchar("status", { length: 40 }).default("pending").notNull(), providerReference: varchar("provider_reference", { length: 200 }), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(), updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull() },
+  (table) => [index("refunds_payment_idx").on(table.paymentId), check("refunds_amount_positive", sql`${table.amountMinor} > 0`)],
+);
+export const webhookEvents = pgTable(
+  "webhook_events",
+  { id: uuid("id").defaultRandom().primaryKey(), provider: paymentProviderEnum("provider").notNull(), externalEventId: varchar("external_event_id", { length: 200 }).notNull(), signatureHash: varchar("signature_hash", { length: 64 }), payloadHash: varchar("payload_hash", { length: 64 }).notNull(), status: varchar("status", { length: 40 }).default("received").notNull(), processedAt: timestamp("processed_at", { withTimezone: true }), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull() },
+  (table) => [uniqueIndex("webhook_events_provider_external_unique").on(table.provider, table.externalEventId)],
+);
+
+
+export const subscriptionPlans = pgTable(
+  "subscription_plans",
+  { id: uuid("id").defaultRandom().primaryKey(), code: varchar("code", { length: 80 }).notNull(), name: varchar("name", { length: 120 }).notNull(), description: text("description"), priceMinor: integer("price_minor").default(0).notNull(), currency: varchar("currency", { length: 3 }).default("PKR").notNull(), billingInterval: billingIntervalEnum("billing_interval").default("monthly").notNull(), productLimit: integer("product_limit").default(100).notNull(), staffLimit: integer("staff_limit").default(3).notNull(), monthlyOrderLimit: integer("monthly_order_limit").default(500).notNull(), storageMbLimit: integer("storage_mb_limit").default(1024).notNull(), customDomainsEnabled: boolean("custom_domains_enabled").default(false).notNull(), messagingEnabled: boolean("messaging_enabled").default(true).notNull(), advancedThemesEnabled: boolean("advanced_themes_enabled").default(false).notNull(), isActive: boolean("is_active").default(true).notNull(), ...timestamps },
+  (table) => [uniqueIndex("subscription_plans_code_unique").on(table.code), check("subscription_plan_limits_positive", sql`${table.productLimit} >= 0 and ${table.staffLimit} >= 0 and ${table.monthlyOrderLimit} >= 0 and ${table.storageMbLimit} >= 0 and ${table.priceMinor} >= 0`)],
+);
+export const storeSubscriptions = pgTable(
+  "store_subscriptions",
+  { id: uuid("id").defaultRandom().primaryKey(), storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }), planId: uuid("plan_id").notNull().references(() => subscriptionPlans.id, { onDelete: "restrict" }), status: subscriptionStatusEnum("status").default("trial").notNull(), startsAt: timestamp("starts_at", { withTimezone: true }).defaultNow().notNull(), endsAt: timestamp("ends_at", { withTimezone: true }), graceEndsAt: timestamp("grace_ends_at", { withTimezone: true }), cancelledAt: timestamp("cancelled_at", { withTimezone: true }), ...timestamps },
+  (table) => [uniqueIndex("store_subscriptions_current_unique").on(table.storeId).where(sql`${table.status} in ('trial','active','past_due')`), index("store_subscriptions_status_end_idx").on(table.status, table.endsAt)],
+);
+export const subscriptionEvents = pgTable(
+  "subscription_events",
+  { id: uuid("id").defaultRandom().primaryKey(), subscriptionId: uuid("subscription_id").notNull().references(() => storeSubscriptions.id, { onDelete: "cascade" }), type: varchar("type", { length: 80 }).notNull(), actorUserId: uuid("actor_user_id").references(() => users.id, { onDelete: "set null" }), metadata: jsonb("metadata").$type<Record<string, unknown>>().default(sql`'{}'::jsonb`).notNull(), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull() },
+  (table) => [index("subscription_events_subscription_idx").on(table.subscriptionId, table.createdAt)],
+);
+export const usageCounters = pgTable(
+  "usage_counters",
+  { id: uuid("id").defaultRandom().primaryKey(), storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }), periodStart: timestamp("period_start", { withTimezone: true }).notNull(), periodEnd: timestamp("period_end", { withTimezone: true }).notNull(), productCount: integer("product_count").default(0).notNull(), staffCount: integer("staff_count").default(0).notNull(), orderCount: integer("order_count").default(0).notNull(), storageBytes: integer("storage_bytes").default(0).notNull(), ...timestamps },
+  (table) => [uniqueIndex("usage_counters_store_period_unique").on(table.storeId, table.periodStart), index("usage_counters_period_idx").on(table.periodEnd)],
+);
+
+export const notifications = pgTable(
+  "notifications",
+  { id: uuid("id").defaultRandom().primaryKey(), storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }), audience: notificationAudienceEnum("audience").notNull(), userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }), customerId: uuid("customer_id").references(() => customers.id, { onDelete: "cascade" }), type: varchar("type", { length: 80 }).notNull(), title: varchar("title", { length: 180 }).notNull(), body: text("body").notNull(), status: notificationStatusEnum("status").default("pending").notNull(), data: jsonb("data").$type<Record<string, unknown>>().default(sql`'{}'::jsonb`).notNull(), sentAt: timestamp("sent_at", { withTimezone: true }), readAt: timestamp("read_at", { withTimezone: true }), ...timestamps },
+  (table) => [index("notifications_seller_idx").on(table.storeId, table.userId, table.createdAt), index("notifications_customer_idx").on(table.storeId, table.customerId, table.createdAt), check("notifications_recipient_valid", sql`(${table.audience} = 'seller' and ${table.userId} is not null) or (${table.audience} = 'customer' and ${table.customerId} is not null)`)],
+);
+export const notificationOutbox = pgTable(
+  "notification_outbox",
+  { id: uuid("id").defaultRandom().primaryKey(), notificationId: uuid("notification_id").notNull().references(() => notifications.id, { onDelete: "cascade" }), channel: varchar("channel", { length: 32 }).notNull(), idempotencyKey: varchar("idempotency_key", { length: 180 }).notNull(), attempts: integer("attempts").default(0).notNull(), availableAt: timestamp("available_at", { withTimezone: true }).defaultNow().notNull(), processedAt: timestamp("processed_at", { withTimezone: true }), lastError: text("last_error"), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull() },
+  (table) => [uniqueIndex("notification_outbox_idempotency_unique").on(table.idempotencyKey), index("notification_outbox_available_idx").on(table.processedAt, table.availableAt)],
+);
+export const backgroundJobExecutions = pgTable(
+  "background_job_executions",
+  { id: uuid("id").defaultRandom().primaryKey(), jobName: varchar("job_name", { length: 100 }).notNull(), idempotencyKey: varchar("idempotency_key", { length: 180 }).notNull(), status: backgroundJobStatusEnum("status").notNull(), attempt: integer("attempt").default(1).notNull(), startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(), finishedAt: timestamp("finished_at", { withTimezone: true }), error: text("error"), metadata: jsonb("metadata").$type<Record<string, unknown>>().default(sql`'{}'::jsonb`).notNull() },
+  (table) => [uniqueIndex("background_job_executions_idempotency_unique").on(table.jobName, table.idempotencyKey), index("background_job_executions_status_idx").on(table.status, table.startedAt)],
+);
+
+export const customerSessions = pgTable(
+  "customer_sessions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    customerId: uuid("customer_id").notNull().references(() => customers.id, { onDelete: "cascade" }),
+    storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }),
+    tokenHash: varchar("token_hash", { length: 64 }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    rotatedFromId: uuid("rotated_from_id"),
+    userAgent: varchar("user_agent", { length: 300 }),
+    ipAddress: varchar("ip_address", { length: 64 }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("customer_sessions_token_unique").on(table.tokenHash),
+    index("customer_sessions_customer_idx").on(table.customerId),
+    index("customer_sessions_expiry_idx").on(table.expiresAt),
+  ],
+);
+
+export const customerAddresses = pgTable(
+  "customer_addresses",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    customerId: uuid("customer_id").notNull().references(() => customers.id, { onDelete: "cascade" }),
+    storeId: uuid("store_id").notNull().references(() => stores.id, { onDelete: "cascade" }),
+    label: varchar("label", { length: 80 }),
+    firstName: varchar("first_name", { length: 80 }).notNull(),
+    lastName: varchar("last_name", { length: 80 }).notNull(),
+    phone: varchar("phone", { length: 32 }).notNull(),
+    addressLine1: varchar("address_line_1", { length: 200 }).notNull(),
+    addressLine2: varchar("address_line_2", { length: 200 }),
+    city: varchar("city", { length: 100 }).notNull(),
+    region: varchar("region", { length: 100 }).notNull(),
+    postalCode: varchar("postal_code", { length: 24 }),
+    countryCode: varchar("country_code", { length: 2 }).notNull(),
+    isDefaultShipping: boolean("is_default_shipping").default(false).notNull(),
+    isDefaultBilling: boolean("is_default_billing").default(false).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("customer_addresses_store_id_unique").on(table.storeId, table.id),
+    uniqueIndex("customer_addresses_default_shipping_unique").on(table.customerId).where(sql`${table.isDefaultShipping} = true`),
+    uniqueIndex("customer_addresses_default_billing_unique").on(table.customerId).where(sql`${table.isDefaultBilling} = true`),
+    index("customer_addresses_customer_idx").on(table.customerId),
+  ],
+);
+
+export const customerTokens = pgTable(
+  "customer_tokens",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    customerId: uuid("customer_id").notNull().references(() => customers.id, { onDelete: "cascade" }),
+    type: customerTokenTypeEnum("type").notNull(),
+    tokenHash: varchar("token_hash", { length: 64 }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("customer_tokens_hash_unique").on(table.tokenHash),
+    index("customer_tokens_customer_type_idx").on(table.customerId, table.type),
   ],
 );
 
@@ -1023,12 +1520,23 @@ export const sessions = pgTable(
 export const storesRelations = relations(stores, ({ many, one }) => ({
   owner: one(users, { fields: [stores.ownerId], references: [users.id] }),
   members: many(storeMembers),
+  domains: many(storeDomains),
   settings: one(storeSettings),
   assets: many(storeAssets),
   themeConfigurations: many(storeThemeConfigurations),
   categories: many(productCategories),
   collections: many(collections),
   products: many(products),
+  carts: many(carts),
+  customers: many(customers),
+}));
+
+
+export const storeDomainsRelations = relations(storeDomains, ({ one }) => ({
+  store: one(stores, {
+    fields: [storeDomains.storeId],
+    references: [stores.id],
+  }),
 }));
 
 export const storeSettingsRelations = relations(storeSettings, ({ one }) => ({
@@ -1150,3 +1658,45 @@ export const productVariantValuesRelations = relations(
     }),
   }),
 );
+
+export const cartsRelations = relations(carts, ({ many, one }) => ({
+  store: one(stores, { fields: [carts.storeId], references: [stores.id] }),
+  items: many(cartItems),
+}));
+export const cartItemsRelations = relations(cartItems, ({ one }) => ({
+  cart: one(carts, { fields: [cartItems.cartId], references: [carts.id] }),
+  product: one(products, { fields: [cartItems.productId], references: [products.id] }),
+  variant: one(productVariants, { fields: [cartItems.variantId], references: [productVariants.id] }),
+}));
+
+export const checkoutSessionsRelations = relations(checkoutSessions, ({ many, one }) => ({
+  cart: one(carts, { fields: [checkoutSessions.cartId], references: [carts.id] }),
+  addresses: many(checkoutAddresses),
+}));
+export const checkoutAddressesRelations = relations(checkoutAddresses, ({ one }) => ({
+  checkout: one(checkoutSessions, { fields: [checkoutAddresses.checkoutSessionId], references: [checkoutSessions.id] }),
+}));
+
+export const ordersRelations = relations(orders, ({ many, one }) => ({
+  store: one(stores, { fields: [orders.storeId], references: [stores.id] }),
+  items: many(orderItems),
+  addresses: many(orderAddresses),
+  history: many(orderStatusHistory),
+  fulfillments: many(orderFulfillments),
+}));
+export const orderItemsRelations = relations(orderItems, ({ one }) => ({
+  order: one(orders, { fields: [orderItems.orderId], references: [orders.id] }),
+}));
+
+export const customersRelations = relations(customers, ({ many, one }) => ({
+  store: one(stores, { fields: [customers.storeId], references: [stores.id] }),
+  sessions: many(customerSessions),
+  addresses: many(customerAddresses),
+  tokens: many(customerTokens),
+}));
+export const customerSessionsRelations = relations(customerSessions, ({ one }) => ({
+  customer: one(customers, { fields: [customerSessions.customerId], references: [customers.id] }),
+}));
+export const customerAddressesRelations = relations(customerAddresses, ({ one }) => ({
+  customer: one(customers, { fields: [customerAddresses.customerId], references: [customers.id] }),
+}));

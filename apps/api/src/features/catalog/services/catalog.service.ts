@@ -11,10 +11,14 @@ import {
 } from "../dto";
 import { ProductMapper } from "../mappers";
 import { CatalogRepository } from "../repositories";
+import { SubscriptionService } from "../../subscriptions";
 
 @Injectable()
 export class CatalogService {
-  constructor(private readonly catalogRepository: CatalogRepository) {}
+  constructor(
+    private readonly catalogRepository: CatalogRepository,
+    private readonly subscriptions: SubscriptionService,
+  ) {}
 
   async findMany(
     storeId: string,
@@ -43,6 +47,7 @@ export class CatalogService {
     userId: string,
     input: CreateProductDto,
   ): Promise<ProductResponseDto> {
+    await this.subscriptions.assertProductLimit(storeId);
     if (
       input.compareAtPriceMinor !== null &&
       input.compareAtPriceMinor !== undefined &&
