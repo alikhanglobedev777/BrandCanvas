@@ -27,3 +27,11 @@ Thumbs.db
 # Local application data
 .brandcanvas/
 config.bat
+
+# Never track real local or production environment files
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
