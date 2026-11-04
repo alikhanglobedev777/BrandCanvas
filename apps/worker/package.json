@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/main.ts",
-    "build": "tsup src/main.ts --format cjs --sourcemap --clean",
-    "start": "node dist/main.js",
+    "dev": "node init && tsx watch src/main.ts",
+    "build": "node init && tsup src/main.ts --format cjs --sourcemap --clean",
+    "start": "node init && node dist/main.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"
   },

@@ -19,7 +19,7 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts src/schema.ts --format esm,cjs --dts --clean",
+    "build": "node init && tsup src/index.ts src/schema.ts --format esm,cjs --dts --clean",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "db:generate": "drizzle-kit generate",
