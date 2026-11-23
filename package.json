@@ -8,8 +8,8 @@
     "pnpm": ">=10.0.0"
   },
   "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build",
+    "dev": "node init && turbo dev",
+    "build": "node init && turbo build",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "format": "prettier --write \"**/*.{ts,tsx,js,mjs,json,md,yml,yaml,css}\"",
