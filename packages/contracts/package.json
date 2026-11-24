@@ -14,7 +14,7 @@
     }
   },
   "scripts": {
-    "build": "node init && tsup src/index.ts --format esm,cjs --dts --clean",
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "generate": "orval --config ./orval.config.ts"
